@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CorrectIA — Corrección inteligente de trabajos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue-50: #E6F1FB; --blue-100: #B5D4F4; --blue-600: #185FA5; --blue-800: #0C447C; --blue-900: #042C53;
+    --green-50: #EAF3DE; --green-600: #3B6D11; --green-800: #27500A;
+    --amber-50: #FAEEDA; --amber-600: #854F0B; --amber-800: #633806;
+    --red-50: #FCEBEB; --red-600: #A32D2D;
+    --gray-50: #F1EFE8; --gray-100: #D3D1C7; --gray-600: #5F5E5A; --gray-800: #444441;
+    --teal-50: #E1F5EE; --teal-600: #0F6E56; --teal-800: #085041;
+    --bg: #f8f9fc; --surface: #ffffff; --border: rgba(0,0,0,0.1); --border-md: rgba(0,0,0,0.15);
+    --text: #1a1a2e; --text-muted: #5f5e6a; --text-light: #9b9aaa;
+    --radius: 10px; --radius-lg: 14px; --radius-xl: 18px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 0.5px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.06);
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* NAV */
+  nav { background: var(--blue-900); color: white; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 58px; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .nav-brand .dot { color: #60a5fa; }
+  .nav-actions { display: flex; align-items: center; gap: 12px; }
+  .btn-classroom { background: white; color: var(--blue-900); border: none; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
+  .btn-classroom:hover { background: var(--blue-50); }
+  .pill-connected { background: rgba(255,255,255,0.15); color: white; font-size: 12px; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
+  .dot-live { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 58px); }
+  .sidebar { background: var(--surface); border-right: 0.5px solid var(--border-md); padding: 1.5rem 1rem; overflow-y: auto; }
+  .main { padding: 1.5rem; overflow-y: auto; }
+
+  /* SIDEBAR */
+  .sidebar-section { margin-bottom: 1.5rem; }
+  .sidebar-label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; padding: 0 6px; }
+  .upload-zone { border: 1.5px dashed var(--border-md); border-radius: var(--radius-lg); padding: 1.2rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
+  .upload-zone:hover, .upload-zone.dragging { border-color: var(--blue-600); background: var(--blue-50); }
+  .upload-zone i { font-size: 28px; color: var(--blue-600); margin-bottom: 8px; display: block; }
+  .upload-zone p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+  .upload-zone strong { color: var(--blue-600); }
+  .upload-zone input[type=file] { display: none; }
+  .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 12px; }
+  .file-item i { font-size: 16px; color: var(--blue-600); flex-shrink: 0; }
+  .file-item .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .file-item .file-status { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+  .status-pending { background: var(--amber-50); color: var(--amber-600); }
+  .status-done { background: var(--green-50); color: var(--green-600); }
+  .status-correcting { background: var(--blue-50); color: var(--blue-600); }
+  .file-remove { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 14px; padding: 2px; flex-shrink: 0; }
+  .file-remove:hover { color: var(--red-600); }
+
+  /* RUBRIC */
+  .rubric-area { width: 100%; border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 10px; font-size: 13px; font-family: 'Inter', sans-serif; color: var(--text); background: var(--bg); resize: vertical; min-height: 120px; line-height: 1.6; }
+  .rubric-area:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px rgba(24,95,165,0.1); }
+  .rubric-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; line-height: 1.4; }
+
+  /* SETTINGS */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 6px; border-radius: 8px; }
+  .setting-row:hover { background: var(--bg); }
+  .setting-label { font-size: 13px; color: var(--text); }
+  .setting-label small { display: block; font-size: 11px; color: var(--text-light); margin-top: 1px; }
+  select.setting-select { border: 0.5px solid var(--border-md); border-radius: 7px; padding: 5px 8px; font-size: 12px; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text); cursor: pointer; }
+  .toggle { width: 36px; height: 20px; background: var(--gray-100); border-radius: 10px; position: relative; cursor: pointer; border: none; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--blue-600); }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left 0.2s; }
+  .toggle.on::after { left: 18px; }
+
+  /* BTN MAIN */
+  .btn-correct { width: 100%; background: var(--blue-900); color: white; border: none; border-radius: var(--radius); padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s; margin-top: 8px; }
+  .btn-correct:hover:not(:disabled) { background: var(--blue-800); }
+  .btn-correct:disabled { background: var(--gray-100); color: var(--text-light); cursor: not-allowed; }
+
+  /* MAIN CONTENT */
+  .main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .main-title { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .main-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .stat-card .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
+  .stat-card .stat-value { font-size: 26px; font-weight: 700; color: var(--text); }
+  .stat-card .stat-value span { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+
+  /* RESULTS TABLE */
+  .results-panel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .results-header { padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .results-header h3 { font-size: 15px; font-weight: 600; }
+  .header-actions { display: flex; gap: 8px; }
+  .btn-sm { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--border-md); background: var(--surface); color: var(--text); display: flex; align-items: center; gap: 5px; transition: background 0.15s; }
+  .btn-sm:hover { background: var(--bg); }
+  .btn-sm.primary { background: var(--blue-900); color: white; border-color: var(--blue-900); }
+  .btn-sm.primary:hover { background: var(--blue-800); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.6px; background: var(--bg); border-bottom: 0.5px solid var(--border); }
+  td { padding: 12px 16px; font-size: 13px; color: var(--text); border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .score-bar { display: flex; align-items: center; gap: 8px; }
+  .bar-track { flex: 1; height: 6px; background: var(--gray-50); border-radius: 3px; overflow: hidden; max-width: 80px; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .bar-fill.high { background: var(--green-600); }
+  .bar-fill.mid { background: var(--amber-600); }
+  .bar-fill.low { background: var(--red-600); }
+  .score-num { font-weight: 700; font-size: 14px; min-width: 32px; }
+  .score-num.high { color: var(--green-600); }
+  .score-num.mid { color: var(--amber-600); }
+  .score-num.low { color: var(--red-600); }
+
+  /* FEEDBACK MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: var(--surface); border-radius: var(--radius-xl); width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal-head { padding: 1.5rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .modal-head h2 { font-size: 18px; font-weight: 700; }
+  .modal-head p { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+  .modal-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--text-muted); flex-shrink: 0; }
+  .modal-body { padding: 1.5rem; }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 0.5px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* FEEDBACK SECTIONS */
+  .feedback-score-big { display: flex; align-items: center; gap: 1.5rem; background: var(--bg); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+  .score-circle { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; flex-shrink: 0; }
+  .score-circle.high { background: var(--green-50); color: var(--green-600); border: 2px solid var(--green-600); }
+  .score-circle.mid { background: var(--amber-50); color: var(--amber-600); border: 2px solid var(--amber-600); }
+  .score-circle.low { background: var(--red-50); color: var(--red-600); border: 2px solid var(--red-600); }
+  .criteria-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+  .criterion-card { background: var(--bg); border-radius: var(--radius); padding: 12px 14px; border: 0.5px solid var(--border); }
+  .criterion-card .c-name { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+  .criterion-card .c-score-row { display: flex; align-items: center; gap: 8px; }
+  .feedback-section { margin-bottom: 1.25rem; }
+  .feedback-section h4 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .feedback-section p, .feedback-section li { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+  .feedback-section ul { padding-left: 1.2rem; }
+  .feedback-section li { margin-bottom: 4px; }
+  .fb-box { background: var(--bg); border-radius: var(--radius); padding: 12px 14px; border: 0.5px solid var(--border); }
+  .fb-box.positive { border-left: 3px solid var(--green-600); background: var(--green-50); }
+  .fb-box.negative { border-left: 3px solid var(--amber-600); background: var(--amber-50); }
+
+  /* AI STREAMING */
+  .ai-thinking { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--blue-600); padding: 8px 0; }
+  .typing-dots { display: flex; gap: 4px; }
+  .typing-dots span { width: 6px; height: 6px; background: var(--blue-600); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+
+  /* CLASSROOM SECTION */
+  .classroom-panel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-top: 1.25rem; overflow: hidden; }
+  .classroom-head { padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .classroom-logo { width: 28px; height: 28px; background: #1a73e8; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: white; }
+  .classroom-head h3 { font-size: 14px; font-weight: 600; }
+  .classroom-head p { font-size: 12px; color: var(--text-muted); }
+  .classroom-body { padding: 1rem 1.25rem; }
+  .classroom-status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+  .classroom-status i { font-size: 18px; }
+
+  /* PROGRESS */
+  .progress-bar { width: 100%; height: 4px; background: var(--gray-50); border-radius: 2px; overflow: hidden; margin-bottom: 1rem; }
+  .progress-fill { height: 100%; background: var(--blue-600); border-radius: 2px; transition: width 0.5s ease; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+  .empty-state i { font-size: 48px; color: var(--gray-100); display: block; margin-bottom: 1rem; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 8px; z-index: 300; }
+  .toast { background: var(--blue-900); color: white; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; display: flex; align-items: center; gap: 8px; animation: slide-in 0.3s ease; box-shadow: var(--shadow-md); }
+  .toast.success { background: var(--green-600); }
+  .toast.error { background: var(--red-600); }
+  @keyframes slide-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 0.5px solid var(--border-md); }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .criteria-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-brand">
+    <i class="ti ti-school"></i>
+    Correct<span class="dot">IA</span>
+  </div>
+  <div class="nav-actions">
+    <div class="pill-connected" id="classroomStatus">
+      <span class="dot-live"></span>
+      <span id="classroomStatusText">Classroom desconectado</span>
+    </div>
+    <button class="btn-classroom" onclick="connectClassroom()">
+      <i class="ti ti-brand-google"></i>
+      Google Classroom
+    </button>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- TRABAJOS -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Trabajos de estudiantes</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,.doc" onchange="handleFiles(this.files)">
+        <i class="ti ti-cloud-upload"></i>
+        <p><strong>Haz clic o arrastra</strong> los archivos aquí<br>PDF, DOCX o TXT</p>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+
+    <!-- RUBRICA -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Rúbrica de evaluación</div>
+      <textarea class="rubric-area" id="rubricText" placeholder="Ingresa la rúbrica aquí...
+
+Ejemplo:
+• Introducción (20%): Claridad del planteamiento, contexto y objetivos bien definidos.
+• Desarrollo (40%): Argumentación sólida, uso de fuentes, profundidad del análisis.
+• Conclusión (20%): Síntesis coherente, responde a los objetivos planteados.
+• Formato (20%): Redacción, ortografía, citas y bibliografía."></textarea>
+      <p class="rubric-hint">Puedes describir criterios, puntajes o pegar la rúbrica completa.</p>
+    </div>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Configuración</div>
+      <div class="setting-row">
+        <div class="setting-label">Escala de notas<small>Nota máxima</small></div>
+        <select class="setting-select" id="scaleSelect">
+          <option value="7">Escala 1-7</option>
+          <option value="100">Escala 0-100</option>
+          <option value="10">Escala 1-10</option>
+          <option value="5">Escala 1-5</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Idioma de retroalimentación<small>Para los estudiantes</small></div>
+        <select class="setting-select" id="langSelect">
+          <option value="español">Español</option>
+          <option value="inglés">Inglés</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Enviar a Classroom<small>Auto-publicar retroalimentación</small></div>
+        <button class="toggle" id="autoSendToggle" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Retroalimentación detallada<small>Incluir sugerencias por criterio</small></div>
+        <button class="toggle on" id="detailedToggle" onclick="this.classList.toggle('on')"></button>
+      </div>
+    </div>
+
+    <button class="btn-correct" id="correctBtn" onclick="startCorrection()" disabled>
+      <i class="ti ti-sparkles"></i>
+      Corregir trabajos con IA
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-header">
+      <div>
+        <h1 class="main-title">Panel de corrección</h1>
+        <p class="main-subtitle" id="mainSubtitle">Sube los trabajos y la rúbrica para comenzar</p>
+      </div>
+      <div class="header-actions" id="headerActions" style="display:none">
+        <button class="btn-sm" onclick="exportResults()"><i class="ti ti-download"></i> Exportar CSV</button>
+        <button class="btn-sm primary" onclick="sendAllToClassroom()"><i class="ti ti-send"></i> Enviar todo a Classroom</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-card">
+        <div class="stat-label">Trabajos subidos</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Corregidos</div>
+        <div class="stat-value" id="statDone">0 <span>/ <span id="statTotalSub">0</span></span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Promedio de la clase</div>
+        <div class="stat-value" id="statAvg">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Enviados a Classroom</div>
+        <div class="stat-value" id="statSent">0</div>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="progressSection" style="display:none; margin-bottom:1rem;">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="ai-thinking" id="aiThinking">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <span id="aiThinkingText">Iniciando corrección...</span>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-panel" id="resultsPanel">
+      <div class="results-header">
+        <h3>Resultados</h3>
+      </div>
+      <div id="emptyState" class="empty-state">
+        <i class="ti ti-file-search"></i>
+        <h3>Aún no hay correcciones</h3>
+        <p>Sube los trabajos de tus estudiantes y una rúbrica,<br>luego haz clic en "Corregir trabajos con IA".</p>
+      </div>
+      <table id="resultsTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Estudiante / Archivo</th>
+            <th>Nota</th>
+            <th>Fortalezas</th>
+            <th>A mejorar</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- CLASSROOM PANEL -->
+    <div class="classroom-panel" id="classroomPanel" style="display:none">
+      <div class="classroom-head">
+        <div class="classroom-logo">G</div>
+        <div>
+          <h3>Google Classroom</h3>
+          <p id="classroomInfo">Conecta tu cuenta para publicar retroalimentación directamente</p>
+        </div>
+      </div>
+      <div class="classroom-body" id="classroomBody">
+        <div class="classroom-status">
+          <i class="ti ti-info-circle"></i>
+          <span>Haz clic en "Google Classroom" en la barra superior para conectar tu cuenta.</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL FEEDBACK -->
+<div class="modal-overlay hidden" id="feedbackModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalStudentName">Retroalimentación</h2>
+        <p id="modalFileName">archivo.pdf</p>
+      </div>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-sm" onclick="copyFeedback()"><i class="ti ti-copy"></i> Copiar</button>
+      <button class="btn-sm primary" onclick="sendToClassroom(currentResult)" id="modalSendBtn">
+        <i class="ti ti-send"></i> Enviar a Classroom
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+let uploadedFiles = [];
+let results = [];
+let classroomConnected = false;
+let currentResult = null;
+let classroomCourses = [];
+
+// ─── FILE HANDLING ───────────────────────────────────────────────────────────
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragging'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragging'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragging'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (uploadedFiles.find(f => f.name === file.name)) return;
+    uploadedFiles.push({ name: file.name, file, status: 'pending' });
+  });
+  renderFileList();
+  updateCorrectBtn();
+  updateStats();
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  if (uploadedFiles.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <i class="ti ti-file-text"></i>
+      <span class="file-name" title="${f.name}">${f.name}</span>
+      <span class="file-status status-${f.status}">${{pending:'Pendiente',correcting:'Corrigiendo...',done:'Listo'}[f.status]}</span>
+      ${f.status==='pending' ? `<button class="file-remove" onclick="removeFile(${i})"><i class="ti ti-x"></i></button>` : ''}
+    </div>`).join('');
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  renderFileList();
+  updateCorrectBtn();
+  updateStats();
+}
+
+function updateCorrectBtn() {
+  const hasFiles = uploadedFiles.filter(f=>f.status==='pending').length > 0;
+  const hasRubric = document.getElementById('rubricText').value.trim().length > 10;
+  document.getElementById('correctBtn').disabled = !(hasFiles && hasRubric);
+}
+document.getElementById('rubricText').addEventListener('input', updateCorrectBtn);
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function updateStats() {
+  const total = uploadedFiles.length;
+  const done = results.length;
+  const sent = results.filter(r=>r.sent).length;
+  const avg = done > 0 ? (results.reduce((s,r)=>s+r.score,0)/done) : null;
+  const scale = parseInt(document.getElementById('scaleSelect').value);
+  
+  if (total > 0) {
+    document.getElementById('statsRow').style.display = 'grid';
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statDone').childNodes[0].textContent = done + ' ';
+    document.getElementById('statTotalSub').textContent = total;
+    document.getElementById('statAvg').textContent = avg !== null ? (scale === 7 ? avg.toFixed(1) : Math.round(avg)) : '—';
+    document.getElementById('statSent').textContent = sent;
+    document.getElementById('mainSubtitle').textContent = `${total} trabajo${total!==1?'s':''} cargado${total!==1?'s':''}`;
+  }
+}
+
+// ─── CORRECTION ──────────────────────────────────────────────────────────────
+async function startCorrection() {
+  const pendingFiles = uploadedFiles.filter(f => f.status === 'pending');
+  if (pendingFiles.length === 0) return;
+  const rubric = document.getElementById('rubricText').value.trim();
+  if (!rubric) { showToast('Por favor ingresa una rúbrica', 'error'); return; }
+
+  document.getElementById('correctBtn').disabled = true;
+  document.getElementById('progressSection').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultsTable').style.display = 'table';
+  document.getElementById('headerActions').style.display = 'flex';
+  document.getElementById('classroomPanel').style.display = 'block';
+
+  let processed = 0;
+  for (const fileObj of pendingFiles) {
+    fileObj.status = 'correcting';
+    renderFileList();
+    document.getElementById('aiThinkingText').textContent = `Leyendo "${fileObj.name}"...`;
+    const pct = Math.round((processed / pendingFiles.length) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+
+    try {
+      const text = await readFileText(fileObj.file);
+      const result = await correctWithAI(fileObj.name, text, rubric);
+      result.fileName = fileObj.name;
+      result.sent = false;
+      results.push(result);
+      fileObj.status = 'done';
+      renderFileList();
+      appendResultRow(result);
+      updateStats();
+      processed++;
+      document.getElementById('progressFill').style.width = Math.round((processed / pendingFiles.length) * 100) + '%';
+    } catch (err) {
+      showToast(`Error con "${fileObj.name}": ${err.message}`, 'error');
+      fileObj.status = 'pending';
+      renderFileList();
+    }
+  }
+
+  document.getElementById('progressSection').style.display = 'none';
+  document.getElementById('correctBtn').disabled = false;
+  showToast(`✓ ${processed} trabajo${processed!==1?'s':''} corregido${processed!==1?'s':''}`, 'success');
+  updateCorrectBtn();
+}
+
+async function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (file.name.endsWith('.pdf')) {
+        resolve(`[Archivo PDF: ${file.name}] — Contenido simulado para demo. En producción, se extraería el texto con una librería PDF.`);
+      } else {
+        resolve(e.target.result || `[Archivo: ${file.name}]`);
+      }
+    };
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    if (file.name.endsWith('.pdf')) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file, 'UTF-8');
+    }
+  });
+}
+
+async function correctWithAI(fileName, content, rubric) {
+  const scale = document.getElementById('scaleSelect').value;
+  const lang = document.getElementById('langSelect').value;
+  const detailed = document.getElementById('detailedToggle').classList.contains('on');
+
+  const systemPrompt = `Eres un asistente académico experto en evaluar trabajos de estudiantes. 
+Debes responder SOLO con un objeto JSON válido, sin backticks ni texto adicional.
+El JSON debe tener exactamente esta estructura:
+{
+  "studentName": "nombre inferido del archivo o Estudiante X",
+  "score": número entre 1 y ${scale},
+  "scorePercent": número entre 0 y 100,
+  "summary": "resumen ejecutivo en 2-3 oraciones",
+  "strengths": ["fortaleza 1", "fortaleza 2"],
+  "improvements": ["mejora 1", "mejora 2"],
+  "criteria": [
+    {"name": "criterio", "score": número, "maxScore": número, "comment": "comentario breve"}
+  ],
+  "feedback": "retroalimentación completa personalizada para el estudiante en ${lang}, en 3-4 párrafos"
+}`;
+
+  const userPrompt = `RÚBRICA DE EVALUACIÓN:
+${rubric}
+
+TRABAJO A EVALUAR (archivo: ${fileName}):
+${content.substring(0, 3000)}
+
+Evalúa este trabajo según la rúbrica. Escala máxima: ${scale}. Sé justo, constructivo y específico.`;
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Error HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data.content.map(b => b.text || '').join('').replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('La IA no devolvió JSON válido');
+  }
+}
+
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+function appendResultRow(r) {
+  const scale = parseInt(document.getElementById('scaleSelect').value);
+  const pct = r.scorePercent || Math.round((r.score / scale) * 100);
+  const cls = pct >= 70 ? 'high' : pct >= 50 ? 'mid' : 'low';
+  const scoreDisplay = scale === 7 ? r.score.toFixed(1) : Math.round(r.score);
+  const idx = results.length - 1;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>
+      <div style="font-weight:600;font-size:13px">${r.studentName}</div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:2px">${r.fileName}</div>
+    </td>
+    <td>
+      <div class="score-bar">
+        <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <span class="score-num ${cls}">${scoreDisplay}</span>
+      </div>
+    </td>
+    <td style="font-size:12px;color:var(--text-muted);max-width:160px">${(r.strengths||['—'])[0]||'—'}</td>
+    <td style="font-size:12px;color:var(--text-muted);max-width:160px">${(r.improvements||['—'])[0]||'—'}</td>
+    <td><span class="file-status ${r.sent?'status-done':'status-pending'}" id="sent-${idx}">${r.sent?'Enviado':'Pendiente'}</span></td>
+    <td>
+      <div style="display:flex;gap:6px">
+        <button class="btn-sm" onclick="openModal(${idx})"><i class="ti ti-eye"></i> Ver</button>
+        <button class="btn-sm" onclick="sendOneToClassroom(${idx})"><i class="ti ti-send"></i></button>
+      </div>
+    </td>`;
+  document.getElementById('resultsBody').appendChild(tr);
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(idx) {
+  const r = results[idx];
+  currentResult = r;
+  const scale = parseInt(document.getElementById('scaleSelect').value);
+  const pct = r.scorePercent || Math.round((r.score / scale) * 100);
+  const cls = pct >= 70 ? 'high' : pct >= 50 ? 'mid' : 'low';
+  const scoreDisplay = scale === 7 ? r.score.toFixed(1) : Math.round(r.score);
+
+  document.getElementById('modalStudentName').textContent = r.studentName;
+  document.getElementById('modalFileName').textContent = r.fileName;
+
+  const criteria = (r.criteria || []).map(c => `
+    <div class="criterion-card">
+      <div class="c-name">${c.name}</div>
+      <div class="c-score-row">
+        <div class="bar-track" style="flex:1"><div class="bar-fill ${cls}" style="width:${Math.round((c.score/c.maxScore)*100)}%"></div></div>
+        <span style="font-size:12px;font-weight:600;color:var(--text-muted)">${c.score}/${c.maxScore}</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.5">${c.comment||''}</p>
+    </div>`).join('');
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="feedback-score-big">
+      <div class="score-circle ${cls}">${scoreDisplay}</div>
+      <div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px">${pct >= 70 ? 'Buen trabajo' : pct >= 50 ? 'Trabajo aceptable' : 'Necesita mejorar'}</div>
+        <div style="font-size:13px;color:var(--text-muted)">${r.summary || ''}</div>
+      </div>
+    </div>
+    ${criteria ? `<div class="criteria-grid">${criteria}</div>` : ''}
+    <div class="feedback-section">
+      <h4><i class="ti ti-thumb-up" style="color:var(--green-600)"></i> Fortalezas</h4>
+      <div class="fb-box positive"><ul>${(r.strengths||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    </div>
+    <div class="feedback-section">
+      <h4><i class="ti ti-bulb" style="color:var(--amber-600)"></i> Oportunidades de mejora</h4>
+      <div class="fb-box negative"><ul>${(r.improvements||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    </div>
+    <div class="feedback-section">
+      <h4><i class="ti ti-message-dots" style="color:var(--blue-600)"></i> Retroalimentación para el estudiante</h4>
+      <div class="fb-box"><p style="white-space:pre-line">${r.feedback||''}</p></div>
+    </div>`;
+
+  document.getElementById('feedbackModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('feedbackModal').classList.add('hidden');
+  currentResult = null;
+}
+
+function copyFeedback() {
+  if (!currentResult) return;
+  const text = `Retroalimentación para ${currentResult.studentName}\n\nNota: ${currentResult.score}\n\nFortalezas:\n${(currentResult.strengths||[]).map(s=>'• '+s).join('\n')}\n\nA mejorar:\n${(currentResult.improvements||[]).map(s=>'• '+s).join('\n')}\n\nComentarios:\n${currentResult.feedback||''}`;
+  navigator.clipboard.writeText(text).then(()=>showToast('Copiado al portapapeles','success')).catch(()=>showToast('No se pudo copiar','error'));
+}
+
+// ─── CLASSROOM ────────────────────────────────────────────────────────────────
+function connectClassroom() {
+  if (classroomConnected) { showToast('Ya estás conectado a Google Classroom'); return; }
+  showToast('Abriendo autenticación de Google...');
+  setTimeout(() => {
+    classroomConnected = true;
+    document.getElementById('classroomStatusText').textContent = 'Mi Clase — Conectado';
+    document.getElementById('classroomInfo').textContent = 'Conectado como profesor@colegio.cl • Mi Clase';
+    document.getElementById('classroomBody').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green-600)">
+          <i class="ti ti-circle-check" style="font-size:18px"></i>
+          Conectado a Google Classroom
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:8px;padding:10px">
+            <div style="font-size:11px;color:var(--text-light);margin-bottom:4px">Curso activo</div>
+            <div style="font-size:13px;font-weight:600">Historia 3°B</div>
+          </div>
+          <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:8px;padding:10px">
+            <div style="font-size:11px;color:var(--text-light);margin-bottom:4px">Estudiantes</div>
+            <div style="font-size:13px;font-weight:600">28 alumnos</div>
+          </div>
+        </div>
+        <button class="btn-sm primary" onclick="sendAllToClassroom()" style="width:fit-content">
+          <i class="ti ti-send"></i> Publicar todas las retroalimentaciones
+        </button>
+      </div>`;
+    showToast('✓ Conectado a Google Classroom', 'success');
+  }, 1500);
+}
+
+function sendOneToClassroom(idx) {
+  if (!classroomConnected) { showToast('Primero conecta Google Classroom', 'error'); return; }
+  const r = results[idx];
+  r.sent = true;
+  const el = document.getElementById(`sent-${idx}`);
+  if (el) { el.textContent = 'Enviado'; el.className = 'file-status status-done'; }
+  updateStats();
+  showToast(`✓ Retroalimentación de ${r.studentName} enviada`, 'success');
+}
+
+function sendAllToClassroom() {
+  if (!classroomConnected) { connectClassroom(); return; }
+  if (results.length === 0) { showToast('No hay resultados que enviar', 'error'); return; }
+  results.forEach((r, i) => { if (!r.sent) { r.sent = true; const el = document.getElementById(`sent-${i}`); if (el) { el.textContent = 'Enviado'; el.className = 'file-status status-done'; } } });
+  updateStats();
+  showToast(`✓ ${results.length} retroalimentación${results.length!==1?'es':''} publicadas en Classroom`, 'success');
+}
+
+function sendToClassroom(r) {
+  if (!classroomConnected) { showToast('Primero conecta Google Classroom', 'error'); return; }
+  r.sent = true;
+  const idx = results.indexOf(r);
+  if (idx !== -1) { const el = document.getElementById(`sent-${idx}`); if (el) { el.textContent = 'Enviado'; el.className = 'file-status status-done'; } }
+  updateStats();
+  showToast(`✓ Enviado a Classroom`, 'success');
+  closeModal();
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportResults() {
+  if (results.length === 0) { showToast('No hay resultados para exportar', 'error'); return; }
+  const scale = parseInt(document.getElementById('scaleSelect').value);
+  const rows = [['Estudiante','Archivo','Nota','%','Fortalezas','Mejoras','Enviado a Classroom']];
+  results.forEach(r => {
+    const pct = r.scorePercent || Math.round((r.score/scale)*100);
+    rows.push([r.studentName, r.fileName, r.score, pct+'%', (r.strengths||[]).join('; '), (r.improvements||[]).join('; '), r.sent?'Sí':'No']);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'correcciones.csv'; a.click();
+  showToast('✓ CSV exportado');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, type='') {
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' '+type : '');
+  t.innerHTML = `<i class="ti ti-${type==='success'?'check':type==='error'?'alert-triangle':'info-circle'}"></i>${msg}`;
+  const container = document.getElementById('toastContainer');
+  container.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(), 300); }, 3500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('rubricText').addEventListener('input', updateCorrectBtn);
+</script>
+</body>
+</html>
