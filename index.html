@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CorrectIA — Evaluación académica inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f4f0;
+  --bg2: #eeecea;
+  --surface: #ffffff;
+  --surface2: #f9f8f6;
+  --border: #e2e0db;
+  --border2: #cccac4;
+  --ink: #1a1915;
+  --ink2: #3d3c38;
+  --ink3: #6b6a65;
+  --ink4: #9e9c96;
+  --gold: #8b6914;
+  --gold-bg: #fdf3dc;
+  --gold-border: #e8c96a;
+  --green: #1a6644;
+  --green-bg: #edf7f1;
+  --green-border: #a3d4b8;
+  --blue: #1a4a8b;
+  --blue-bg: #eef3fc;
+  --blue-border: #a3bde8;
+  --red: #8b1a1a;
+  --red-bg: #fdedf0;
+  --red-border: #e8a3a3;
+  --amber: #7a4a00;
+  --amber-bg: #fef7ec;
+  --amber-border: #e8c87a;
+  --r: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  --shadow: 0 2px 8px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.05);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.14), 0 0 0 1px rgba(0,0,0,.06);
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; font-size: 14px; line-height: 1.5; }
+
+/* ── NAV ── */
+nav {
+  height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; flex-shrink: 0; z-index: 50;
+  box-shadow: 0 1px 0 var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand-icon {
+  width: 32px; height: 32px; background: var(--ink); border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-icon i { font-size: 17px; color: var(--gold-border); }
+.brand-name { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--ink); letter-spacing: -.3px; }
+.brand-name em { color: var(--gold); font-style: normal; }
+.nav-center { display: flex; align-items: center; gap: 6px; }
+.nav-tab { padding: 6px 14px; border-radius: 8px; border: none; background: transparent; font-size: 13px; font-weight: 500; color: var(--ink3); cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; }
+.nav-tab:hover { background: var(--bg); color: var(--ink); }
+.nav-tab.active { background: var(--bg2); color: var(--ink); font-weight: 600; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.nav-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink3); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; cursor: pointer; transition: all .15s; }
+.nav-chip:hover { border-color: var(--border2); color: var(--ink); }
+.dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--ink4); flex-shrink: 0; }
+.dot-live.on { background: var(--green); animation: dp 2s infinite; }
+@keyframes dp { 0%,100% { box-shadow: 0 0 0 0 rgba(26,102,68,.4); } 50% { box-shadow: 0 0 0 5px rgba(26,102,68,0); } }
+.nav-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--surface); background: var(--ink); border: none; border-radius: 9px; padding: 8px 16px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; }
+.nav-btn:hover { background: var(--ink2); }
+
+/* ── LAYOUT ── */
+.app { display: flex; flex: 1; overflow: hidden; }
+.left-col { width: 310px; min-width: 310px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.main-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.right-col { width: 360px; min-width: 360px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── SCROLLBARS ── */
+.col-scroll { flex: 1; overflow-y: auto; }
+.col-scroll::-webkit-scrollbar { width: 5px; }
+.col-scroll::-webkit-scrollbar-track { background: transparent; }
+.col-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ── SECTION HEADERS ── */
+.col-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.col-title { font-size: 11px; font-weight: 700; color: var(--ink4); text-transform: uppercase; letter-spacing: 1px; }
+.col-subtitle { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+
+/* ── TABS (rubric) ── */
+.tab-row { display: flex; gap: 4px; margin-top: 10px; }
+.tab-btn { flex: 1; padding: 6px 8px; border-radius: 7px; border: 1px solid var(--border); background: transparent; font-size: 12px; font-weight: 500; color: var(--ink3); cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; text-align: center; }
+.tab-btn:hover { background: var(--bg); color: var(--ink); }
+.tab-btn.on { background: var(--ink); color: white; border-color: var(--ink); }
+.tab-pane { display: none; padding: 12px 0 0; }
+.tab-pane.show { display: block; }
+
+/* ── FORMS ── */
+textarea.ta {
+  width: 100%; min-height: 120px; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif;
+  font-size: 12px; line-height: 1.7; padding: 10px 12px; resize: vertical;
+}
+textarea.ta:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(139,105,20,.1); }
+textarea.ta::placeholder { color: var(--ink4); }
+input.inp {
+  width: 100%; border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif;
+  font-size: 13px; padding: 8px 12px;
+}
+input.inp:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(139,105,20,.1); }
+input.inp::placeholder { color: var(--ink4); }
+select.sel {
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif;
+  font-size: 12px; padding: 7px 10px; cursor: pointer; width: 100%;
+}
+select.sel:focus { outline: none; border-color: var(--gold); }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 1.5px dashed var(--border2); border-radius: var(--r-lg);
+  padding: 20px 16px; text-align: center; cursor: pointer; transition: all .2s;
+  background: var(--bg2); margin-bottom: 10px;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: var(--gold-bg); }
+.upload-zone .uz-icon { font-size: 28px; color: var(--ink4); display: block; margin-bottom: 8px; }
+.upload-zone .uz-title { font-size: 13px; font-weight: 600; color: var(--ink2); margin-bottom: 3px; }
+.upload-zone .uz-sub { font-size: 11px; color: var(--ink3); line-height: 1.6; }
+.uz-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 8px; }
+.uz-tag { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; font-weight: 600; color: var(--ink3); padding: 2px 8px; }
+input[type=file] { display: none; }
+
+/* ── FILE CARDS ── */
+.file-card {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px 12px; margin-bottom: 5px;
+  cursor: pointer; transition: all .15s; position: relative;
+}
+.file-card:hover { border-color: var(--border2); background: var(--bg2); }
+.file-card.active { border-color: var(--gold); background: var(--gold-bg); box-shadow: 0 0 0 2px rgba(139,105,20,.1); }
+.fc-thumb { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+.ft-pdf { background: #fff0f0; color: #c43c3c; }
+.ft-doc { background: #eff5ff; color: #2b5bb8; }
+.ft-img { background: #f0f9f4; color: #1a6644; }
+.ft-txt { background: var(--gold-bg); color: var(--gold); }
+.fc-info { flex: 1; min-width: 0; }
+.fc-name { font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-meta { font-size: 10px; color: var(--ink4); margin-top: 1px; }
+.fc-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+.fb-pending { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+.fb-doing { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+.fb-done { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.fb-error { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+.fc-del { background: none; border: none; cursor: pointer; color: var(--ink4); font-size: 14px; padding: 2px; opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+.file-card:hover .fc-del { opacity: 1; }
+.fc-del:hover { color: var(--red); }
+
+/* ── OA SELECTOR ── */
+.oa-box { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: var(--r-lg); padding: 12px 14px; margin-bottom: 2px; }
+.oa-label { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.oa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.oa-selected { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 11px; color: var(--ink3); margin-top: 6px; display: none; }
+.oa-selected.show { display: block; }
+.oa-selected strong { display: block; color: var(--blue); font-size: 12px; margin-bottom: 4px; }
+.oa-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.oa-chip { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 6px; font-size: 10px; font-weight: 600; color: var(--blue); padding: 2px 7px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.oa-chip i { font-size: 11px; }
+
+/* ── SECTION DIVIDERS ── */
+.sec-row { display: flex; align-items: center; gap: 8px; padding: 12px 0 6px; }
+.sec-lbl { font-size: 11px; font-weight: 700; color: var(--ink4); text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; }
+.sec-line { flex: 1; height: 1px; background: var(--border); }
+.count-pill { background: var(--ink); color: white; border-radius: 10px; font-size: 10px; font-weight: 700; padding: 1px 7px; }
+
+/* ── SETTINGS ── */
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; }
+.s-label { font-size: 12px; font-weight: 500; color: var(--ink2); }
+.s-label small { display: block; font-size: 10px; color: var(--ink4); font-weight: 400; margin-top: 1px; }
+.tog { width: 36px; height: 20px; background: var(--border2); border-radius: 10px; position: relative; cursor: pointer; border: none; transition: background .2s; flex-shrink: 0; }
+.tog.on { background: var(--green); }
+.tog::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.tog.on::after { left: 18px; }
+
+/* ── CTA BUTTON ── */
+.cta-btn {
+  width: 100%; background: var(--ink); color: white; border: none;
+  border-radius: var(--r-lg); padding: 13px 16px; font-size: 14px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Inter', sans-serif; transition: all .15s; margin-top: 6px;
+}
+.cta-btn:hover:not(:disabled) { background: var(--ink2); transform: translateY(-1px); box-shadow: var(--shadow); }
+.cta-btn:disabled { background: var(--border); color: var(--ink4); cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── RUBRIC FILE LOADED ── */
+.rubric-loaded {
+  background: var(--green-bg); border: 1px solid var(--green-border);
+  border-radius: var(--r); padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+}
+.rubric-loaded i { color: var(--green); font-size: 18px; flex-shrink: 0; }
+.rubric-loaded .rl-name { font-size: 12px; font-weight: 600; color: var(--ink); }
+.rubric-loaded .rl-sub { font-size: 10px; color: var(--ink3); margin-top: 1px; }
+.rubric-loaded button { background: none; border: none; color: var(--ink4); cursor: pointer; font-size: 16px; margin-left: auto; padding: 2px; }
+.rubric-loaded button:hover { color: var(--red); }
+.rubric-preview { margin-top: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-size: 10px; color: var(--ink3); max-height: 70px; overflow-y: auto; white-space: pre-line; line-height: 1.6; }
+
+/* ── MAIN CENTER ── */
+.main-header { padding: 20px 24px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.mh-left h1 { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -.3px; }
+.mh-left p { font-size: 13px; color: var(--ink3); margin-top: 4px; }
+.mh-right { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ── STATS BAR ── */
+.stats-bar { display: grid; grid-template-columns: repeat(4,1fr); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.stat-cell { background: var(--surface); padding: 12px 20px; border-right: 1px solid var(--border); }
+.stat-cell:last-child { border-right: none; }
+.stat-val { font-family: 'Lora', serif; font-size: 24px; font-weight: 600; color: var(--ink); letter-spacing: -.5px; }
+.stat-lbl { font-size: 11px; color: var(--ink4); margin-top: 2px; }
+
+/* ── PROGRESS ── */
+.progress-wrap { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; flex-shrink: 0; }
+.prog-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+.prog-fill { height: 100%; background: var(--ink); border-radius: 2px; transition: width .4s ease; }
+.prog-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink3); }
+.dots { display: flex; gap: 4px; }
+.dots span { width: 5px; height: 5px; background: var(--ink); border-radius: 50%; animation: dbounce 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dbounce { 0%,80%,100% { transform: scale(.6); opacity: .3; } 40% { transform: scale(1); opacity: 1; } }
+
+/* ── RESULTS TABLE ── */
+.results-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
+.rt-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.rt-head h3 { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; color: var(--ink); }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; color: var(--ink4); text-transform: uppercase; letter-spacing: .7px; background: var(--bg); border-bottom: 1px solid var(--border); }
+td { padding: 12px 16px; font-size: 13px; color: var(--ink2); border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg2); cursor: pointer; }
+.score-pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; border: 1.5px solid; }
+.sp-hi { color: var(--green); background: var(--green-bg); border-color: var(--green-border); }
+.sp-md { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-border); }
+.sp-lo { color: var(--red); background: var(--red-bg); border-color: var(--red-border); }
+.ai-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px; border: 1px solid; }
+.ai-hi { color: var(--red); background: var(--red-bg); border-color: var(--red-border); }
+.ai-md { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-border); }
+.ai-lo { color: var(--green); background: var(--green-bg); border-color: var(--green-border); }
+.sent-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 6px; }
+.sp-sent { color: var(--green); background: var(--green-bg); }
+.sp-unsent { color: var(--ink4); background: var(--bg2); }
+
+/* ── ACTION BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 9px; border: 1px solid var(--border2); background: var(--surface); color: var(--ink2); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; }
+.btn:hover { background: var(--bg); color: var(--ink); border-color: var(--border2); }
+.btn.primary { background: var(--ink); color: white; border-color: var(--ink); }
+.btn.primary:hover { background: var(--ink2); }
+.btn.gold { background: var(--gold-bg); color: var(--gold); border-color: var(--gold-border); }
+.btn.gold:hover { background: #f9eecc; }
+.btn.green { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+.btn.green:hover { background: #daf0e6; }
+
+/* ── EMPTY STATE ── */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 3rem 2rem; }
+.empty-icon { width: 64px; height: 64px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; box-shadow: var(--shadow-sm); }
+.empty-icon i { font-size: 30px; color: var(--ink4); }
+.empty h2 { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.empty p { font-size: 13px; color: var(--ink3); line-height: 1.75; max-width: 380px; }
+
+/* ── RIGHT PANEL ── */
+.rp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 2rem; color: var(--ink4); }
+.rp-empty i { font-size: 32px; margin-bottom: 10px; }
+.rp-empty p { font-size: 12px; line-height: 1.7; color: var(--ink3); }
+
+/* Feedback card */
+.fb-header { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px; }
+.fb-student-name { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.fb-file-name { font-size: 11px; color: var(--ink4); margin-bottom: 14px; }
+.fb-score-row { display: flex; align-items: center; gap: 14px; }
+.score-ring { width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Lora', serif; font-size: 18px; font-weight: 600; flex-shrink: 0; border: 2.5px solid; }
+.sr-hi { color: var(--green); background: var(--green-bg); border-color: var(--green-border); }
+.sr-md { color: var(--amber); background: var(--amber-bg); border-color: var(--amber-border); }
+.sr-lo { color: var(--red); background: var(--red-bg); border-color: var(--red-border); }
+.fb-summary-text { font-size: 12px; color: var(--ink2); line-height: 1.7; flex: 1; }
+
+/* AI detector */
+.ai-detector { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; margin-bottom: 12px; }
+.ai-det-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ai-det-title { font-size: 11px; font-weight: 700; color: var(--ink3); text-transform: uppercase; letter-spacing: .7px; display: flex; align-items: center; gap: 5px; }
+.ai-meter { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.ai-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.ai-fill.hi { background: var(--red); }
+.ai-fill.md { background: var(--amber); }
+.ai-fill.lo { background: var(--green); }
+.ai-note { font-size: 11px; color: var(--ink3); margin-top: 6px; line-height: 1.6; }
+
+/* OA tag in feedback */
+.oa-tag-row { margin-bottom: 12px; }
+.oa-inline-tag { display: inline-flex; align-items: center; gap: 5px; background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 7px; font-size: 11px; font-weight: 600; color: var(--blue); padding: 4px 10px; margin: 2px; }
+
+/* Criteria */
+.crit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+.crit-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 10px 12px; }
+.crit-name { font-size: 10px; font-weight: 700; color: var(--ink4); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.crit-bar-row { display: flex; align-items: center; gap: 7px; }
+.crit-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.crit-fill { height: 100%; border-radius: 2px; }
+.crit-score { font-size: 11px; font-weight: 700; color: var(--ink2); }
+.crit-comment { font-size: 10px; color: var(--ink3); margin-top: 6px; line-height: 1.5; }
+
+/* Feedback sections */
+.fb-section { margin-bottom: 10px; }
+.fb-sec-title { font-size: 11px; font-weight: 700; color: var(--ink3); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.fb-box { border-radius: var(--r); padding: 12px 14px; font-size: 12px; line-height: 1.75; color: var(--ink2); border: 1px solid; }
+.fb-box ul { padding-left: 14px; }
+.fb-box li { margin-bottom: 4px; }
+.fb-box p { white-space: pre-line; }
+.fb-green { background: var(--green-bg); border-color: var(--green-border); border-left: 3px solid var(--green); }
+.fb-amber { background: var(--amber-bg); border-color: var(--amber-border); border-left: 3px solid var(--amber); }
+.fb-gold { background: var(--gold-bg); border-color: var(--gold-border); border-left: 3px solid var(--gold); }
+
+/* Classroom card */
+.classroom-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: var(--r); padding: 12px 14px; margin-bottom: 10px; }
+.classroom-card.sent { background: var(--green-bg); border-color: var(--green-border); }
+.cc-logo { width: 28px; height: 28px; background: #1a73e8; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+.cc-text { flex: 1; }
+.cc-text strong { display: block; font-size: 12px; font-weight: 600; color: var(--ink); }
+.cc-text span { font-size: 11px; color: var(--ink3); }
+.cc-send-btn { background: var(--blue); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; white-space: nowrap; }
+.cc-send-btn:hover { background: #1557b0; }
+.cc-send-btn.sent { background: var(--green); }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; backdrop-filter: blur(3px); }
+.modal-overlay.hidden { display: none; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.modal-head { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; position: sticky; top: 0; background: var(--surface); z-index: 2; }
+.modal-head h2 { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--ink); }
+.modal-head p { font-size: 12px; color: var(--ink4); margin-top: 2px; }
+.modal-close { width: 30px; height: 30px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--ink3); font-size: 17px; flex-shrink: 0; transition: all .15s; }
+.modal-close:hover { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+.modal-body { padding: 20px 24px; }
+.modal-foot { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--surface); }
+
+/* ── TOAST ── */
+.toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 8px; z-index: 400; }
+.toast { background: var(--ink); color: white; padding: 10px 16px; border-radius: var(--r); font-size: 13px; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg); animation: tslide .25s ease; }
+.toast.ok { background: var(--green); }
+.toast.err { background: var(--red); }
+@keyframes tslide { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* col padding */
+.pad { padding: 14px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="brand">
+    <div class="brand-icon"><i class="ti ti-brain"></i></div>
+    <span class="brand-name">Correct<em>IA</em></span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-chip" id="classroomChip">
+      <span class="dot-live" id="classroomDot"></span>
+      <span id="classroomChipText">Classroom desconectado</span>
+    </div>
+    <div id="userAvatar" style="display:none;align-items:center;gap:8px">
+      <img id="userPic" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--border2)" src="" alt="">
+      <span id="userName" style="font-size:12px;color:var(--ink2);font-weight:500"></span>
+    </div>
+    <button class="nav-btn" id="classroomBtn" onclick="connectClassroom()">
+      <i class="ti ti-brand-google"></i> Conectar Classroom
+    </button>
+    <button class="nav-btn" id="disconnectBtn" onclick="disconnectClassroom()" style="display:none;background:var(--bg);color:var(--ink2);border:1px solid var(--border2)">
+      <i class="ti ti-logout"></i> Salir
+    </button>
+  </div>
+</nav>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- ── LEFT COLUMN ── -->
+  <div class="left-col">
+    <div class="col-header">
+      <div class="col-title">Configuración de evaluación</div>
+    </div>
+    <div class="col-scroll pad">
+
+      <!-- OA CURRICULAR -->
+      <div class="sec-row"><span class="sec-lbl">OA curricular</span><span class="sec-line"></span></div>
+      <div class="oa-box">
+        <div class="oa-label"><i class="ti ti-books" style="font-size:14px"></i> Bases curriculares MINEDUC</div>
+        <div class="oa-grid">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--ink4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Nivel</div>
+            <select class="sel" id="oaLevel" onchange="updateOAList()">
+              <option value="">— Seleccionar —</option>
+              <optgroup label="Educación Básica">
+                <option value="1B">1° Básico</option>
+                <option value="2B">2° Básico</option>
+                <option value="3B">3° Básico</option>
+                <option value="4B">4° Básico</option>
+                <option value="5B">5° Básico</option>
+                <option value="6B">6° Básico</option>
+                <option value="7B">7° Básico</option>
+                <option value="8B">8° Básico</option>
+              </optgroup>
+              <optgroup label="Educación Media">
+                <option value="1M">1° Medio</option>
+                <option value="2M">2° Medio</option>
+                <option value="3M">3° Medio</option>
+                <option value="4M">4° Medio</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--ink4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Asignatura</div>
+            <select class="sel" id="oaSubject" onchange="updateOAList()">
+              <option value="">— Seleccionar —</option>
+              <option value="len">Lenguaje y Comunicación</option>
+              <option value="mat">Matemática</option>
+              <option value="his">Historia, Geografía y Cs. Sociales</option>
+              <option value="cie">Ciencias Naturales</option>
+              <option value="ing">Inglés</option>
+              <option value="art">Artes Visuales</option>
+              <option value="musi">Música</option>
+              <option value="ef">Educación Física y Salud</option>
+              <option value="tec">Tecnología</option>
+              <option value="ori">Orientación</option>
+              <option value="filo">Filosofía</option>
+              <option value="bio">Biología</option>
+              <option value="fis">Física</option>
+              <option value="qui">Química</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- OA LIST -->
+        <div id="oaListWrap" style="display:none">
+          <div style="font-size:10px;font-weight:700;color:var(--ink4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Selecciona OA a evaluar</div>
+          <div id="oaList" style="max-height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+
+        <div class="oa-selected" id="oaSelected">
+          <strong>OA seleccionados</strong>
+          <div class="oa-chips" id="oaChips"></div>
+        </div>
+      </div>
+
+      <!-- RUBRIC -->
+      <div class="sec-row"><span class="sec-lbl">Rúbrica / Pauta</span><span class="sec-line"></span></div>
+      <div class="tab-row">
+        <button class="tab-btn on" id="tab-write" onclick="switchTab('write')">Escribir</button>
+        <button class="tab-btn" id="tab-file" onclick="switchTab('file')">Subir archivo</button>
+      </div>
+      <div class="tab-pane show" id="pane-write">
+        <textarea class="ta" id="rubricText" rows="6" placeholder="Escribe o pega la rúbrica o pauta de cotejo…
+
+Ejemplo:
+• Comprensión lectora (25 pts): identifica idea central…
+• Argumentación (35 pts): fundamenta con ejemplos…
+• Redacción (20 pts): ortografía, puntuación…
+• Presentación (20 pts): orden, formato, extensión…"></textarea>
+        <div style="font-size:10px;color:var(--ink4);margin-top:5px">Puedes describir criterios con o sin puntaje.</div>
+      </div>
+      <div class="tab-pane" id="pane-file">
+        <div class="upload-zone" id="rubricZone" onclick="document.getElementById('rubricFileInput').click()">
+          <input type="file" id="rubricFileInput" accept=".xlsx,.xls,.docx,.doc,.txt,.pdf" onchange="loadRubricFile(this.files[0])">
+          <i class="ti ti-table-import uz-icon"></i>
+          <div class="uz-title">Sube tu rúbrica o pauta</div>
+          <div class="uz-tags">
+            <span class="uz-tag">Excel</span>
+            <span class="uz-tag">Word</span>
+            <span class="uz-tag">TXT</span>
+            <span class="uz-tag">PDF</span>
+          </div>
+        </div>
+        <div id="rubricLoadedWrap" style="display:none"></div>
+      </div>
+
+      <!-- STUDENT FILES -->
+      <div class="sec-row">
+        <span class="sec-lbl">Trabajos</span>
+        <span class="sec-line"></span>
+        <span class="count-pill" id="fileCount">0/30</span>
+      </div>
+      <div class="upload-zone" id="studentZone" onclick="document.getElementById('studentFilesInput').click()">
+        <input type="file" id="studentFilesInput" multiple accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png,.webp" onchange="handleStudentFiles(this.files)">
+        <i class="ti ti-files uz-icon"></i>
+        <div class="uz-title">Hasta 30 trabajos</div>
+        <div class="uz-sub">Arrastra o haz clic para seleccionar</div>
+        <div class="uz-tags">
+          <span class="uz-tag">PDF</span>
+          <span class="uz-tag">Word</span>
+          <span class="uz-tag">JPG / PNG</span>
+          <span class="uz-tag">TXT</span>
+        </div>
+      </div>
+      <div id="studentFileList"></div>
+
+      <!-- SETTINGS -->
+      <div class="sec-row"><span class="sec-lbl">Ajustes</span><span class="sec-line"></span></div>
+      <div class="setting-row">
+        <div class="s-label">Nombre del curso</div>
+        <input type="text" class="inp" id="courseName" placeholder="Ej: 3°B" style="width:110px;font-size:12px;padding:6px 10px" oninput="updateStats()">
+      </div>
+      <div class="setting-row">
+        <div class="s-label">Escala</div>
+        <select class="sel" id="scaleSelect" style="width:110px">
+          <option value="7">1 a 7</option>
+          <option value="100">0 a 100</option>
+          <option value="10">1 a 10</option>
+          <option value="5">1 a 5</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="s-label">Tono de retroalimentación</div>
+        <select class="sel" id="toneSelect" style="width:130px">
+          <option value="amable">Amable y alentador</option>
+          <option value="formal">Formal y académico</option>
+          <option value="directo">Directo y conciso</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="s-label">Detector uso IA<small>Analiza indicios de IA generativa</small></div>
+        <button class="tog on" id="aiDetTog" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <div class="setting-row">
+        <div class="s-label">Auto-enviar a Classroom<small>Al terminar cada corrección</small></div>
+        <button class="tog" id="autoSendTog" onclick="this.classList.toggle('on')"></button>
+      </div>
+
+      <button class="cta-btn" id="correctBtn" onclick="startCorrection()" disabled>
+        <i class="ti ti-sparkles"></i> Corregir con IA
+      </button>
+    </div>
+  </div>
+
+  <!-- ── MAIN COLUMN ── -->
+  <div class="main-col">
+    <div class="main-header">
+      <div class="mh-left">
+        <h1 id="mainTitle">Panel de resultados</h1>
+        <p id="mainSub">Carga los trabajos y la rúbrica para comenzar la corrección</p>
+      </div>
+      <div class="mh-right" id="headerActions" style="display:none">
+        <button class="btn" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Exportar Excel</button>
+        <button class="btn green" onclick="openBulkSendModal()"><i class="ti ti-send"></i> Publicar en Classroom</button>
+      </div>
+    </div>
+
+    <div class="stats-bar" id="statsBar" style="display:none">
+      <div class="stat-cell"><div class="stat-val" id="stTotal">0</div><div class="stat-lbl">Trabajos cargados</div></div>
+      <div class="stat-cell"><div class="stat-val" id="stDone">0</div><div class="stat-lbl">Corregidos</div></div>
+      <div class="stat-cell"><div class="stat-val" id="stAvg">—</div><div class="stat-lbl">Promedio clase</div></div>
+      <div class="stat-cell"><div class="stat-val" id="stAI">—</div><div class="stat-lbl">Alertas uso IA</div></div>
+    </div>
+
+    <div id="progressWrap" style="display:none">
+      <div class="progress-wrap">
+        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <div class="prog-row">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <span id="progText">Iniciando corrección…</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-scroll" style="padding:20px 24px">
+      <div class="empty" id="emptyState">
+        <div class="empty-icon"><i class="ti ti-school"></i></div>
+        <h2>Bienvenido a CorrectIA</h2>
+        <p>Conecta los Objetivos de Aprendizaje del currículum, sube la rúbrica y los trabajos de tus estudiantes. La IA los corregirá con retroalimentación detallada y amable.</p>
+      </div>
+      <div id="resultsWrap" style="display:none">
+        <div class="results-wrap">
+          <div class="rt-head">
+            <h3 id="tableTitle">Resultados</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Nota</th>
+                <th>Uso IA</th>
+                <th>Lo que logró</th>
+                <th>Por mejorar</th>
+                <th>Classroom</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT COLUMN ── -->
+  <div class="right-col">
+    <div class="col-header">
+      <div class="col-title">Retroalimentación</div>
+      <div class="col-subtitle">Haz clic en un estudiante para ver detalles</div>
+    </div>
+    <div class="col-scroll pad" id="rpScroll">
+      <div class="rp-empty">
+        <i class="ti ti-message-2"></i>
+        <p>Selecciona un trabajo en la tabla central para ver la retroalimentación completa y enviarla a Classroom.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay hidden" id="feedModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2 id="mName">—</h2><p id="mFile">—</p></div>
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="mBody"></div>
+    <div class="modal-foot" id="modalFoot">
+      <button class="btn" onclick="copyFeedbackModal()"><i class="ti ti-copy"></i> Copiar texto</button>
+      <button class="btn green" id="modalSendBtn" onclick="modalSendClassroom()"><i class="ti ti-send"></i> Enviar a Classroom</button>
+      <button class="btn green" id="modalSubmitBtn" onclick="submitToClassroom()" style="display:none"><i class="ti ti-send"></i> Publicar nota y comentario</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ─── OA DATA ────────────────────────────────────────────────────────────────
+const OA_DB = {
+  len: {
+    name: 'Lenguaje y Comunicación',
+    '1B': ['OA1: Leer textos en voz alta','OA2: Comprender textos aplicando estrategias','OA3: Leer y familiarizarse con textos literarios','OA7: Escribir con letra clara','OA10: Escribir oraciones y textos breves'],
+    '2B': ['OA1: Leer palabras con precisión y fluidez','OA2: Comprender textos narrativos y descriptivos','OA4: Leer y familiarizarse con textos literarios','OA9: Escribir textos de forma legible','OA11: Escribir textos breves con propósito claro'],
+    '3B': ['OA1: Leer textos con entonación adecuada','OA2: Comprender textos expositivos y narrativos','OA3: Leer textos literarios para desarrollar gusto lector','OA10: Escribir textos de forma legible','OA12: Escribir textos argumentativos simples'],
+    '4B': ['OA1: Leer fluidamente textos variados','OA2: Comprender textos no literarios','OA3: Leer textos literarios y establecer conexiones','OA11: Escribir textos con propósito y audiencia definidos','OA13: Escribir cartas, noticias y otros géneros'],
+    '5B': ['OA1: Leer y comprender textos expositivos','OA2: Comprender textos argumentativos','OA3: Desarrollar gusto por la lectura literaria','OA12: Planificar, escribir y revisar textos','OA14: Producir textos con recursos literarios'],
+    '6B': ['OA1: Comprender textos con vocabulario variado','OA2: Analizar textos argumentativos','OA3: Leer y comentar textos literarios','OA12: Escribir textos con estructura clara','OA15: Usar recursos para enriquecer la escritura'],
+    '7B': ['OA1: Analizar textos de distintos géneros','OA2: Interpretar textos de opinión','OA3: Analizar aspectos formales de textos literarios','OA14: Producir textos coherentes y cohesionados','OA16: Aplicar estrategias de escritura'],
+    '8B': ['OA1: Analizar críticamente textos de medios','OA2: Evaluar argumentos en textos no literarios','OA3: Analizar textos literarios según su contexto','OA15: Escribir textos argumentativos con evidencia','OA17: Revisar y reescribir textos propios'],
+    '1M': ['OA1: Analizar textos literarios del siglo XX','OA2: Comprender y evaluar textos argumentativos','OA3: Aplicar estrategias de comprensión compleja','OA14: Producir textos para distintos propósitos','OA18: Usar conectores y recursos cohesivos'],
+    '2M': ['OA1: Analizar obras literarias en su contexto','OA2: Evaluar textos que abordan un mismo tema','OA3: Distinguir hechos de opiniones','OA14: Producir textos narrativos y argumentativos','OA19: Aplicar normas ortográficas'],
+    '3M': ['OA1: Analizar textos literarios hispanoamericanos','OA2: Sintetizar información de múltiples textos','OA3: Evaluar la calidad argumentativa','OA14: Escribir textos con propósito comunicativo claro','OA20: Editar textos propios'],
+    '4M': ['OA1: Analizar diversidad de textos literarios','OA2: Producir textos de investigación','OA3: Fundamentar interpretaciones con evidencia','OA14: Producir textos para la vida académica','OA21: Citar fuentes según normas establecidas']
+  },
+  mat: {
+    name: 'Matemática',
+    '1B': ['OA1: Contar hasta 100','OA2: Representar números del 0 al 20','OA3: Comparar y ordenar números','OA9: Sumar y restar hasta 20','OA13: Identificar figuras geométricas'],
+    '2B': ['OA1: Contar hasta 1000','OA2: Componer y descomponer números','OA4: Sumar y restar hasta 100','OA10: Calcular dobles y mitades','OA15: Describir cuerpos geométricos'],
+    '3B': ['OA1: Representar números hasta 10.000','OA2: Sumar y restar hasta 1000','OA5: Multiplicar hasta 10x10','OA12: Calcular con monedas y billetes','OA17: Usar fracciones simples'],
+    '4B': ['OA1: Representar números hasta 1.000.000','OA3: Multiplicar y dividir','OA7: Resolver problemas de cuatro operaciones','OA14: Comparar fracciones','OA18: Construir y analizar gráficos'],
+    '5B': ['OA1: Representar números decimales','OA3: Multiplicar por dos cifras','OA5: Dividir por dos cifras','OA12: Sumar y restar fracciones','OA17: Calcular porcentajes simples'],
+    '6B': ['OA1: Representar números enteros','OA3: Calcular potencias','OA6: Resolver ecuaciones simples','OA11: Multiplicar y dividir fracciones','OA16: Calcular áreas y perímetros'],
+    '7B': ['OA1: Operar con números racionales','OA4: Calcular raíz cuadrada','OA7: Representar algebraicamente situaciones','OA13: Trabajar con proporcionalidad directa e inversa','OA17: Calcular probabilidades simples'],
+    '8B': ['OA1: Representar y operar con potencias','OA3: Resolver sistemas de ecuaciones','OA6: Trabajar con funciones lineales','OA14: Calcular áreas y volúmenes','OA18: Analizar datos estadísticos'],
+    '1M': ['OA1: Describir funciones cuadráticas','OA2: Operar con expresiones algebraicas','OA5: Resolver ecuaciones de segundo grado','OA9: Aplicar razones trigonométricas','OA14: Usar estadística descriptiva'],
+    '2M': ['OA1: Analizar función exponencial','OA3: Operar con logaritmos','OA6: Resolver sistemas de ecuaciones','OA10: Calcular probabilidades','OA14: Interpretar datos en contextos reales'],
+    '3M': ['OA1: Analizar función logarítmica','OA2: Estudiar sucesiones y series','OA5: Resolver inecuaciones','OA9: Aplicar geometría analítica','OA13: Tomar decisiones con base en datos'],
+    '4M': ['OA1: Analizar funciones trigonométricas','OA3: Aplicar el cálculo diferencial básico','OA7: Modelar situaciones con funciones','OA10: Resolver problemas de probabilidad condicional','OA14: Usar herramientas estadísticas']
+  },
+  his: {
+    name: 'Historia, Geografía y Cs. Sociales',
+    '1B': ['OA1: Identificar pertenencia a comunidades','OA2: Reconocer roles en la familia','OA4: Describir características del entorno','OA7: Reconocer patrimonio cultural local'],
+    '3B': ['OA1: Describir la vida cotidiana en el pasado','OA3: Ubicar lugares en mapas sencillos','OA5: Reconocer pueblos originarios de Chile','OA9: Identificar recursos naturales de Chile'],
+    '5B': ['OA1: Analizar el proceso de conquista','OA3: Caracterizar la sociedad colonial','OA6: Describir la Independencia de Chile','OA10: Usar fuentes históricas'],
+    '7B': ['OA1: Analizar la Revolución Francesa','OA3: Comprender la Revolución Industrial','OA6: Analizar procesos de independencia latinoamericana','OA12: Construir argumentos con evidencia histórica'],
+    '1M': ['OA1: Analizar proceso de formación del Estado chileno','OA3: Comprender el parlamentarismo','OA6: Evaluar transformaciones económicas del siglo XIX','OA10: Analizar fuentes primarias'],
+    '2M': ['OA1: Analizar la Primera Guerra Mundial','OA3: Comprender la crisis de 1929','OA5: Analizar la Segunda Guerra Mundial','OA8: Evaluar regímenes totalitarios'],
+    '3M': ['OA1: Analizar el proceso de modernización en Chile','OA3: Comprender el período 1970-1990','OA6: Evaluar la transición democrática','OA9: Aplicar pensamiento crítico a fuentes históricas'],
+    '4M': ['OA1: Analizar la globalización','OA3: Comprender desafíos democráticos actuales','OA5: Evaluar problemas ambientales globales','OA8: Desarrollar proyectos de investigación social']
+  },
+  cie: {
+    name: 'Ciencias Naturales',
+    '1B': ['OA1: Observar seres vivos del entorno','OA3: Identificar partes del cuerpo humano','OA5: Reconocer cambios en el cielo','OA8: Explorar materiales del entorno'],
+    '3B': ['OA1: Clasificar seres vivos','OA3: Describir funciones vitales','OA5: Explicar el ciclo del agua','OA9: Identificar mezclas y soluciones'],
+    '5B': ['OA1: Analizar reproducción en plantas y animales','OA4: Explicar el sistema digestivo','OA7: Describir propiedades de la materia','OA11: Identificar fuentes de energía'],
+    '7B': ['OA1: Analizar la célula','OA3: Explicar la herencia genética','OA6: Describir reacciones químicas','OA10: Comprender fuerzas y movimiento'],
+    '1M': ['OA1: Analizar organización celular','OA3: Explicar metabolismo energético','OA5: Comprender ondas y sonido','OA9: Investigar usando método científico'],
+    '2M': ['OA1: Analizar genética mendeliana','OA3: Comprender evolución de las especies','OA5: Explicar electromagnetismo','OA8: Diseñar investigaciones científicas']
+  }
+};
+
+let selectedOAs = [];
+
+function updateOAList() {
+  const level = document.getElementById('oaLevel').value;
+  const subject = document.getElementById('oaSubject').value;
+  const wrap = document.getElementById('oaListWrap');
+  const listEl = document.getElementById('oaList');
+
+  if (!level || !subject || !OA_DB[subject] || !OA_DB[subject][level]) {
+    wrap.style.display = 'none';
+    return;
+  }
+
+  const oaList = OA_DB[subject][level];
+  wrap.style.display = 'block';
+  listEl.innerHTML = oaList.map(function(oa) {
+    var isSelected = selectedOAs.indexOf(oa) >= 0;
+    return '<div onclick="toggleOA(' + JSON.stringify(oa) + ')" style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid ' + (isSelected ? 'var(--blue-border)' : 'var(--border)') + ';background:' + (isSelected ? 'var(--blue-bg)' : 'var(--bg)') + ';cursor:pointer;font-size:11px;line-height:1.5;color:var(--ink2);transition:all .15s">'
+      + '<i class="ti ' + (isSelected ? 'ti-square-check' : 'ti-square') + '" style="font-size:14px;color:' + (isSelected ? 'var(--blue)' : 'var(--ink4)') + ';margin-top:1px;flex-shrink:0"></i>'
+      + oa + '</div>';
+  }).join('');
+  renderOAChips();
+}
+
+function toggleOA(oa) {
+  var idx = selectedOAs.indexOf(oa);
+  if (idx >= 0) { selectedOAs.splice(idx, 1); }
+  else { selectedOAs.push(oa); }
+  updateOAList();
+  updateBtn();
+}
+
+function removeOA(oa) {
+  var idx = selectedOAs.indexOf(oa);
+  if (idx >= 0) { selectedOAs.splice(idx, 1); }
+  renderOAChips();
+  updateOAList();
+  updateBtn();
+}
+
+function renderOAChips() {
+  var el = document.getElementById('oaSelected');
+  var chips = document.getElementById('oaChips');
+  if (selectedOAs.length === 0) { el.classList.remove('show'); return; }
+  el.classList.add('show');
+  chips.innerHTML = selectedOAs.map(function(oa) {
+    var short = oa.split(':')[0];
+    return '<span class="oa-chip" onclick="removeOA(' + JSON.stringify(oa) + ')">' + short + '<i class="ti ti-x"></i></span>';
+  }).join('');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['write','file'].forEach(function(t) {
+    document.getElementById('tab-'+t).classList.toggle('on', t===tab);
+    document.getElementById('pane-'+t).classList.toggle('show', t===tab);
+  });
+  updateBtn();
+}
+
+// ─── RUBRIC FILE ──────────────────────────────────────────────────────────────
+var rubricFileText = '';
+
+async function loadRubricFile(file) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  var text = '';
+  try {
+    if (ext === 'xlsx' || ext === 'xls') {
+      var buf = await file.arrayBuffer();
+      var wb = XLSX.read(buf);
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      text = rows.map(function(r) { return r.join(' | '); }).filter(function(r) { return r.trim(); }).join('\n');
+    } else {
+      text = await file.text().catch(function() { return '[Archivo: ' + file.name + ']'; });
+    }
+    rubricFileText = text;
+    var lines = text.split('\n').filter(function(l) { return l.trim(); }).length;
+    document.getElementById('rubricZone').style.display = 'none';
+    document.getElementById('rubricLoadedWrap').style.display = 'block';
+    document.getElementById('rubricLoadedWrap').innerHTML =
+      '<div class="rubric-loaded">'
+      + '<i class="ti ti-circle-check"></i>'
+      + '<div class="rl-name">' + file.name + '</div>'
+      + '<span style="font-size:10px;color:var(--ink4);margin-left:4px">' + lines + ' filas</span>'
+      + '<button onclick="clearRubricFile()"><i class="ti ti-x"></i></button>'
+      + '</div>'
+      + '<div class="rubric-preview">' + text.substring(0, 400) + (text.length > 400 ? '…' : '') + '</div>';
+    updateBtn();
+    showToast('Rúbrica cargada: ' + lines + ' líneas', 'ok');
+  } catch(e) { showToast('Error al leer el archivo', 'err'); }
+}
+
+function clearRubricFile() {
+  rubricFileText = '';
+  document.getElementById('rubricZone').style.display = 'block';
+  document.getElementById('rubricLoadedWrap').style.display = 'none';
+  document.getElementById('rubricLoadedWrap').innerHTML = '';
+  document.getElementById('rubricFileInput').value = '';
+  updateBtn();
+}
+
+function getRubric() {
+  if (document.getElementById('pane-file').classList.contains('show')) {
+    return rubricFileText;
+  }
+  return document.getElementById('rubricText').value.trim();
+}
+
+// ─── STUDENT FILES ─────────────────────────────────────────────────────────────
+var studentFiles = [];
+var results = [];
+var classroomConnected = false;
+var selectedIdx = null;
+var currentModalIdx = null;
+
+var sz = document.getElementById('studentZone');
+sz.addEventListener('dragover', function(e) { e.preventDefault(); sz.classList.add('drag'); });
+sz.addEventListener('dragleave', function() { sz.classList.remove('drag'); });
+sz.addEventListener('drop', function(e) { e.preventDefault(); sz.classList.remove('drag'); handleStudentFiles(e.dataTransfer.files); });
+
+function handleStudentFiles(files) {
+  Array.from(files).forEach(function(file) {
+    if (studentFiles.length >= 30) { showToast('Máximo 30 trabajos', 'err'); return; }
+    if (studentFiles.find(function(f) { return f.name === file.name; })) return;
+    studentFiles.push({ name: file.name, file: file, status: 'pending' });
+  });
+  renderFileList();
+  updateBtn();
+  updateStats();
+}
+
+function getThumbClass(name) {
+  var ext = name.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return 'ft-pdf';
+  if (ext === 'docx' || ext === 'doc') return 'ft-doc';
+  if (['jpg','jpeg','png','webp'].indexOf(ext) >= 0) return 'ft-img';
+  return 'ft-txt';
+}
+function getIcon(name) {
+  var ext = name.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return 'ti-file-type-pdf';
+  if (ext === 'docx' || ext === 'doc') return 'ti-file-type-doc';
+  if (['jpg','jpeg','png','webp'].indexOf(ext) >= 0) return 'ti-photo';
+  return 'ti-file-text';
+}
+
+function renderFileList() {
+  var el = document.getElementById('studentFileList');
+  document.getElementById('fileCount').textContent = studentFiles.length + '/30';
+  if (!studentFiles.length) { el.innerHTML = ''; return; }
+  var html = '';
+  studentFiles.forEach(function(f, i) {
+    var statusMap = { pending: ['fb-pending','Pendiente'], correcting: ['fb-doing','Leyendo...'], done: ['fb-done','Listo'], error: ['fb-error','Error'] };
+    var s = statusMap[f.status] || statusMap.pending;
+    var isActive = selectedIdx !== null && results[selectedIdx] && results[selectedIdx].fileName === f.name;
+    var activeClass = isActive ? ' active' : '';
+    var delBtn = f.status === 'pending'
+      ? '<button class="fc-del" onclick="removeFile(event,' + i + ')"><i class="ti ti-x"></i></button>'
+      : '';
+    var safeName = f.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var kb = (f.file.size / 1024).toFixed(0);
+    html += '<div class="file-card' + activeClass + '" onclick="selectByFile(this.dataset.fname)" data-fname="' + safeName + '">'
+      + '<div class="fc-thumb ' + getThumbClass(f.name) + '"><i class="ti ' + getIcon(f.name) + '"></i></div>'
+      + '<div class="fc-info"><div class="fc-name" title="' + safeName + '">' + safeName + '</div>'
+      + '<div class="fc-meta">' + kb + ' KB</div></div>'
+      + '<span class="fc-badge ' + s[0] + '">' + s[1] + '</span>'
+      + delBtn
+      + '</div>';
+  });
+  el.innerHTML = html;
+}
+
+
+function removeFile(e, i) {
+  e.stopPropagation();
+  studentFiles.splice(i, 1);
+  renderFileList();
+  updateBtn();
+  updateStats();
+}
+
+// ─── ENABLE BTN ──────────────────────────────────────────────────────────────
+function updateBtn() {
+  var hasPending = studentFiles.filter(function(f) { return f.status === 'pending'; }).length > 0;
+  var hasRubric = getRubric().length > 8;
+  document.getElementById('correctBtn').disabled = !(hasPending && hasRubric);
+}
+document.getElementById('rubricText').addEventListener('input', updateBtn);
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function updateStats() {
+  var total = studentFiles.length;
+  var done = results.length;
+  if (total === 0) return;
+  var course = document.getElementById('courseName').value || '';
+  var subject = document.getElementById('oaSubject').value;
+  var level = document.getElementById('oaLevel').value;
+  var subjectName = subject && OA_DB[subject] ? OA_DB[subject].name : '';
+  var titleParts = [course, level, subjectName].filter(function(x) { return x; });
+  document.getElementById('mainTitle').textContent = titleParts.length ? titleParts.join(' — ') : 'Panel de resultados';
+  document.getElementById('mainSub').textContent = done + ' de ' + total + ' trabajo' + (total !== 1 ? 's' : '') + ' corregido' + (total !== 1 ? 's' : '');
+  document.getElementById('statsBar').style.display = 'grid';
+  document.getElementById('stTotal').textContent = total;
+  document.getElementById('stDone').textContent = done;
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  if (done > 0) {
+    var avg = results.reduce(function(s,r) { return s+r.score; }, 0) / done;
+    document.getElementById('stAvg').textContent = scale === 7 ? avg.toFixed(1) : Math.round(avg);
+    var aiAlerts = results.filter(function(r) { return (r.aiPercent||0) >= 50; }).length;
+    document.getElementById('stAI').textContent = aiAlerts > 0 ? aiAlerts + ' alerta' + (aiAlerts !== 1 ? 's' : '') : 'Sin alertas';
+  }
+  var tableTitle = document.getElementById('tableTitle');
+  if (tableTitle) tableTitle.textContent = 'Resultados' + (titleParts.length ? ' — ' + titleParts.join(' / ') : '');
+}
+
+// ─── READ FILE ────────────────────────────────────────────────────────────────
+async function readFileContent(fo) {
+  var file = fo.file;
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','webp'].indexOf(ext) >= 0) {
+    return new Promise(function(res) {
+      var reader = new FileReader();
+      reader.onload = function(e) { res({ type: 'image', data: e.target.result.split(',')[1], mediaType: file.type || 'image/jpeg' }); };
+      reader.readAsDataURL(file);
+    });
+  }
+  if (ext === 'xlsx' || ext === 'xls') {
+    var buf = await file.arrayBuffer();
+    var wb = XLSX.read(buf);
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    return { type: 'text', data: XLSX.utils.sheet_to_json(ws, {header:1}).map(function(r) { return r.join(' '); }).join('\n') };
+  }
+  var text = await file.text().catch(function() { return '[Archivo: ' + file.name + ']'; });
+  return { type: 'text', data: text };
+}
+
+// ─── CORRECTION ───────────────────────────────────────────────────────────────
+async function startCorrection() {
+  var pending = studentFiles.filter(function(f) { return f.status === 'pending'; });
+  if (!pending.length) return;
+  var rubric = getRubric();
+  if (!rubric) { showToast('Ingresa o sube una rúbrica antes de continuar', 'err'); return; }
+
+  document.getElementById('correctBtn').disabled = true;
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultsWrap').style.display = 'block';
+  document.getElementById('headerActions').style.display = 'flex';
+
+  var subject = document.getElementById('oaSubject').value;
+  var level = document.getElementById('oaLevel').value;
+  var subjectName = subject && OA_DB[subject] ? OA_DB[subject].name : '';
+  var nl2 = String.fromCharCode(10);
+  var oaContext = selectedOAs.length
+    ? 'Objetivos de Aprendizaje a evaluar:' + nl2 + selectedOAs.join(nl2) + nl2 + nl2
+    : '';
+  var currContext = (level || subjectName)
+    ? 'Nivel: ' + level + '. Asignatura: ' + subjectName + '.' + nl2
+    : '';
+
+  var done = 0;
+  for (var i = 0; i < pending.length; i++) {
+    var fo = pending[i];
+    fo.status = 'correcting';
+    renderFileList();
+    document.getElementById('progText').textContent = 'Leyendo "' + fo.name + '"…';
+    document.getElementById('progFill').style.width = Math.round((done / pending.length) * 100) + '%';
+    try {
+      var content = await readFileContent(fo);
+      var result = await callAI(fo.name, content, rubric, oaContext, currContext);
+      result.fileName = fo.name;
+      result.sent = false;
+      results.push(result);
+      fo.status = 'done';
+      renderFileList();
+      appendRow(result, results.length - 1);
+      updateStats();
+      if (document.getElementById('autoSendTog').classList.contains('on') && classroomConnected) {
+        results[results.length-1].sent = true;
+        updateSentCell(results.length-1);
+      }
+    } catch(e) {
+      fo.status = 'error';
+      renderFileList();
+      showToast('Error en "' + fo.name + '": ' + e.message, 'err');
+    }
+    done++;
+  }
+
+  document.getElementById('progFill').style.width = '100%';
+  setTimeout(function() { document.getElementById('progressWrap').style.display = 'none'; }, 600);
+  document.getElementById('correctBtn').disabled = false;
+  updateBtn();
+  showToast(done + ' trabajo' + (done!==1?'s':'') + ' corregido' + (done!==1?'s':'') + ' correctamente', 'ok');
+}
+
+async function callAI(fileName, content, rubric, oaContext, currContext) {
+  var scale = document.getElementById('scaleSelect').value;
+  var tone = document.getElementById('toneSelect').value;
+  var detectAI = document.getElementById('aiDetTog').classList.contains('on');
+  var ext = fileName.split('.').pop().toLowerCase();
+  var isImg = ['jpg','jpeg','png','webp'].indexOf(ext) >= 0;
+
+  var toneInstructions = {
+    'amable': 'Usa un tono cálido, alentador y constructivo. Comienza reconociendo los logros antes de mencionar mejoras. Usa frases como "Lograste muy bien...", "Un aspecto a seguir trabajando es...", "¡Buen esfuerzo en...".',
+    'formal': 'Usa un tono académico y profesional. Sé objetivo y preciso. Evita coloquialismos.',
+    'directo': 'Sé conciso y directo. Ve al grano sin rodeos. Usa frases cortas y claras.'
+  };
+
+  var nl = String.fromCharCode(10);
+  var toneText = toneInstructions[tone] || toneInstructions['amable'];
+  var sysLines = [
+    'Eres un docente experto y empatico. Evaluas trabajos academicos segun rubrica y bases curriculares chilenas.',
+    'IMPORTANTE: Responde UNICAMENTE con un objeto JSON valido. Sin backticks, sin texto adicional, sin explicaciones.',
+    'Estructura exacta del JSON:',
+    '{"studentName":"nombre inferido del archivo sin extension","score":numero,"scorePercent":numero entre 0-100,',
+    '"summary":"resumen de 2 oraciones sobre el desempeno general",',
+    '"aiPercent":' + (detectAI ? 'numero entre 0-100 que indica probabilidad de uso de IA generativa' : '0') + ',',
+    '"aiNote":"explicacion breve del analisis de uso de IA",',
+    '"oaAchieved":["OA logrado 1","OA logrado 2"],',
+    '"oaPending":["OA por desarrollar 1"],',
+    '"strengths":["fortaleza especifica y concreta 1","fortaleza 2","fortaleza 3"],',
+    '"improvements":["mejora especifica indicando exactamente que hacer 1","mejora 2","mejora 3"],',
+    '"criteria":[{"name":"nombre criterio","score":numero,"maxScore":numero,"comment":"comentario breve y especifico"}],',
+    '"feedback":"Retroalimentacion directa al estudiante. ' + toneText + ' Menciona aspectos concretos del trabajo. Minimo 5 oraciones."}',
+    'Escala maxima: ' + scale + '. Detectar IA: ' + detectAI + '.'
+  ];
+  var sys = sysLines.join(nl);
+
+  var oaContext = selectedOAs.length
+    ? 'Objetivos de Aprendizaje a evaluar:' + nl + selectedOAs.join(nl) + nl + nl
+    : '';
+  var currContext = (level || subjectName)
+    ? 'Nivel: ' + level + '. Asignatura: ' + subjectName + '.' + nl
+    : '';
+
+  var userContent;
+  if (isImg && content.type === 'image') {
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: content.mediaType, data: content.data } },
+      { type: 'text', text: currContext + oaContext + 'RÚBRICA:\n' + rubric + '\n\nEvalúa el trabajo en la imagen (archivo: ' + fileName + ').' }
+    ];
+  } else {
+    userContent = currContext + oaContext + 'RÚBRICA:\n' + rubric + '\n\nTRABAJO (archivo: ' + fileName + '):\n' + (content.data || '').substring(0, 3800) + '\n\nEvalúa este trabajo según la rúbrica y el contexto curricular.';
+  }
+
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      system: sys,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  });
+
+  if (!resp.ok) {
+    var err = await resp.json().catch(function() { return {}; });
+    throw new Error((err.error && err.error.message) || 'HTTP ' + resp.status);
+  }
+  var data = await resp.json();
+  var raw = data.content.map(function(b) { return b.text || ''; }).join('').replace(/```json|```/g,'').trim();
+  try { return JSON.parse(raw); } catch(e) { throw new Error('La IA no devolvió JSON válido'); }
+}
+
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+function appendRow(r, idx) {
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var pct = r.scorePercent || Math.round((r.score / scale) * 100);
+  var sc = pct >= 70 ? 'sp-hi' : pct >= 50 ? 'sp-md' : 'sp-lo';
+  var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+  var ai = r.aiPercent || 0;
+  var aiCls = ai >= 65 ? 'ai-hi' : ai >= 35 ? 'ai-md' : 'ai-lo';
+  var aiLbl = ai >= 65 ? 'Alto' : ai >= 35 ? 'Medio' : 'Bajo';
+  var str1 = (r.strengths && r.strengths[0]) || '—';
+  var imp1 = (r.improvements && r.improvements[0]) || '—';
+
+  var tr = document.createElement('tr');
+  tr.id = 'row-' + idx;
+  tr.onclick = function() { showFeedback(idx); };
+  tr.innerHTML = '<td><div style="font-weight:600;font-size:13px;color:var(--ink)">' + r.studentName + '</div>'
+    + '<div style="font-size:10px;color:var(--ink4);margin-top:2px">' + r.fileName + '</div></td>'
+    + '<td><span class="score-pill ' + sc + '">' + sd + '</span></td>'
+    + '<td><span class="ai-pill ' + aiCls + '">' + aiLbl + ' ' + ai + '%</span></td>'
+    + '<td style="font-size:12px;color:var(--ink2);max-width:150px">' + str1 + '</td>'
+    + '<td style="font-size:12px;color:var(--ink2);max-width:150px">' + imp1 + '</td>'
+    + '<td><span id="sent-' + idx + '" class="sent-pill ' + (r.sent ? 'sp-sent' : 'sp-unsent') + '">'
+    + (r.sent ? '<i class="ti ti-check" style="font-size:11px"></i> Enviado' : 'Pendiente') + '</span></td>'
+    + '<td><button class="btn" style="padding:5px 10px;font-size:11px" onclick="event.stopPropagation();openModal(' + idx + ')"><i class="ti ti-maximize" style="font-size:13px"></i></button></td>';
+  document.getElementById('resultsBody').appendChild(tr);
+}
+
+function updateSentCell(idx) {
+  var el = document.getElementById('sent-' + idx);
+  if (el) { el.className = 'sent-pill sp-sent'; el.innerHTML = '<i class="ti ti-check" style="font-size:11px"></i> Enviado'; }
+}
+
+// ─── RIGHT PANEL ──────────────────────────────────────────────────────────────
+function selectByFile(fname) {
+  var idx = results.findIndex(function(r) { return r.fileName === fname; });
+  if (idx >= 0) showFeedback(idx);
+}
+
+function showFeedback(idx) {
+  selectedIdx = idx;
+  var r = results[idx];
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var pct = r.scorePercent || Math.round((r.score / scale) * 100);
+  var sc = pct >= 70 ? 'sr-hi' : pct >= 50 ? 'sr-md' : 'sr-lo';
+  var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+  var ai = r.aiPercent || 0;
+  var aiCls = ai >= 65 ? 'hi' : ai >= 35 ? 'md' : 'lo';
+  var aiPillCls = ai >= 65 ? 'ai-hi' : ai >= 35 ? 'ai-md' : 'ai-lo';
+  var aiLbl = ai >= 65 ? 'Alto' : ai >= 35 ? 'Medio' : 'Bajo';
+
+  // Criteria HTML
+  var critHTML = '';
+  if (r.criteria && r.criteria.length) {
+    critHTML = '<div class="crit-grid">';
+    r.criteria.forEach(function(c) {
+      var cp = Math.round((c.score / c.maxScore) * 100);
+      var cc = cp >= 70 ? 'var(--green)' : cp >= 50 ? 'var(--amber)' : 'var(--red)';
+      critHTML += '<div class="crit-card">'
+        + '<div class="crit-name">' + c.name + '</div>'
+        + '<div class="crit-bar-row"><div class="crit-bar"><div class="crit-fill" style="width:' + cp + '%;background:' + cc + '"></div></div>'
+        + '<span class="crit-score">' + c.score + '/' + c.maxScore + '</span></div>'
+        + '<div class="crit-comment">' + (c.comment || '') + '</div>'
+        + '</div>';
+    });
+    critHTML += '</div>';
+  }
+
+  // OA tags
+  var oaTagsHTML = '';
+  var allOAShown = (r.oaAchieved || []).concat(r.oaPending || []);
+  if (allOAShown.length) {
+    oaTagsHTML = '<div class="oa-tag-row">';
+    (r.oaAchieved || []).forEach(function(oa) {
+      oaTagsHTML += '<span class="oa-inline-tag" style="background:var(--green-bg);border-color:var(--green-border);color:var(--green)">'
+        + '<i class="ti ti-check" style="font-size:11px"></i>' + oa.split(':')[0] + '</span>';
+    });
+    (r.oaPending || []).forEach(function(oa) {
+      oaTagsHTML += '<span class="oa-inline-tag" style="background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)">'
+        + '<i class="ti ti-clock" style="font-size:11px"></i>' + oa.split(':')[0] + '</span>';
+    });
+    oaTagsHTML += '</div>';
+  }
+
+  // Strengths / improvements
+  var strHTML = '<ul>' + (r.strengths || ['—']).map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
+  var impHTML = '<ul>' + (r.improvements || ['—']).map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
+  var fbText = (r.feedback || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  document.getElementById('rpScroll').innerHTML =
+    '<div class="fb-header">'
+    + '<div class="fb-student-name">' + r.studentName + '</div>'
+    + '<div class="fb-file-name">' + r.fileName + '</div>'
+    + '<div class="fb-score-row">'
+    + '<div class="score-ring ' + sc + '">' + sd + '</div>'
+    + '<div class="fb-summary-text">' + (r.summary || '') + '</div>'
+    + '</div>'
+    + '</div>'
+
+    + (oaTagsHTML || '')
+
+    + '<div class="ai-detector">'
+    + '<div class="ai-det-head">'
+    + '<span class="ai-det-title"><i class="ti ti-robot"></i> Detector uso de IA</span>'
+    + '<span class="ai-pill ' + aiPillCls + '">' + aiLbl + ' — ' + ai + '%</span>'
+    + '</div>'
+    + '<div class="ai-meter"><div class="ai-fill ' + aiCls + '" style="width:' + ai + '%"></div></div>'
+    + '<div class="ai-note">' + (r.aiNote || 'Sin indicios significativos de generación automática.') + '</div>'
+    + '</div>'
+
+    + critHTML
+
+    + '<div class="fb-section">'
+    + '<div class="fb-sec-title"><i class="ti ti-star" style="color:var(--green)"></i> Lo que lograste muy bien</div>'
+    + '<div class="fb-box fb-green">' + strHTML + '</div>'
+    + '</div>'
+
+    + '<div class="fb-section">'
+    + '<div class="fb-sec-title"><i class="ti ti-trending-up" style="color:var(--amber)"></i> Oportunidades de mejora</div>'
+    + '<div class="fb-box fb-amber">' + impHTML + '</div>'
+    + '</div>'
+
+    + '<div class="fb-section">'
+    + '<div class="fb-sec-title"><i class="ti ti-message-2" style="color:var(--gold)"></i> Comentarios del profesor</div>'
+    + '<div class="fb-box fb-gold"><p>' + fbText + '</p></div>'
+    + '</div>'
+
+    + '<div class="classroom-card' + (r.sent ? ' sent' : '') + '" id="ccCard-' + idx + '">'
+    + '<div class="cc-logo">G</div>'
+    + '<div class="cc-text"><strong>Google Classroom</strong><span>' + (r.sent ? 'Retroalimentación publicada' : 'Publicar retroalimentación al estudiante') + '</span></div>'
+    + '<button class="cc-send-btn' + (r.sent ? ' sent' : '') + '" onclick="sendOne(' + idx + ')">' + (r.sent ? '✓ Enviado' : 'Enviar') + '</button>'
+    + '</div>'
+
+    + '<div style="display:flex;gap:8px;margin-top:4px">'
+    + '<button class="btn" style="flex:1;justify-content:center" onclick="openModal(' + idx + ')"><i class="ti ti-maximize"></i> Ver completo</button>'
+    + '<button class="btn" style="flex:1;justify-content:center" onclick="copyFeedbackIdx(' + idx + ')"><i class="ti ti-copy"></i> Copiar</button>'
+    + '</div>';
+
+  renderFileList();
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(idx) {
+  currentModalIdx = idx;
+  var r = results[idx];
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var pct = r.scorePercent || Math.round((r.score / scale) * 100);
+  var sc = pct >= 70 ? 'sr-hi' : pct >= 50 ? 'sr-md' : 'sr-lo';
+  var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+  var label = pct >= 70 ? 'Excelente trabajo' : pct >= 50 ? 'Trabajo satisfactorio' : 'Trabajo por reforzar';
+
+  var critHTML = '';
+  if (r.criteria && r.criteria.length) {
+    critHTML = '<div class="crit-grid" style="margin-bottom:16px">';
+    r.criteria.forEach(function(c) {
+      var cp = Math.round((c.score / c.maxScore) * 100);
+      var cc = cp >= 70 ? 'var(--green)' : cp >= 50 ? 'var(--amber)' : 'var(--red)';
+      critHTML += '<div class="crit-card"><div class="crit-name">' + c.name + '</div>'
+        + '<div class="crit-bar-row"><div class="crit-bar"><div class="crit-fill" style="width:' + cp + '%;background:' + cc + '"></div></div>'
+        + '<span class="crit-score">' + c.score + '/' + c.maxScore + '</span></div>'
+        + '<div class="crit-comment">' + (c.comment || '') + '</div></div>';
+    });
+    critHTML += '</div>';
+  }
+
+  var strHTML = '<ul>' + (r.strengths || ['—']).map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
+  var impHTML = '<ul>' + (r.improvements || ['—']).map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
+  var fbText = (r.feedback || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  document.getElementById('mName').textContent = r.studentName;
+  document.getElementById('mFile').textContent = r.fileName;
+  document.getElementById('mBody').innerHTML =
+    '<div class="fb-score-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px">'
+    + '<div class="score-ring ' + sc + '" style="width:64px;height:64px;font-size:20px">' + sd + '</div>'
+    + '<div><div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px">' + label + '</div>'
+    + '<div style="font-size:13px;color:var(--ink2);line-height:1.7">' + (r.summary || '') + '</div></div>'
+    + '</div>'
+    + critHTML
+    + '<div class="fb-section"><div class="fb-sec-title"><i class="ti ti-star" style="color:var(--green)"></i> Fortalezas</div><div class="fb-box fb-green">' + strHTML + '</div></div>'
+    + '<div class="fb-section"><div class="fb-sec-title"><i class="ti ti-trending-up" style="color:var(--amber)"></i> A mejorar</div><div class="fb-box fb-amber">' + impHTML + '</div></div>'
+    + '<div class="fb-section"><div class="fb-sec-title"><i class="ti ti-message-2" style="color:var(--gold)"></i> Retroalimentación completa</div><div class="fb-box fb-gold" style="font-size:13px;line-height:1.8"><p>' + fbText + '</p></div></div>';
+
+  document.getElementById('feedModal').classList.remove('hidden');
+  document.getElementById('modalSendBtn').style.display = 'flex';
+  document.getElementById('modalSubmitBtn').style.display = 'none';
+}
+
+function closeModal() { document.getElementById('feedModal').classList.add('hidden'); currentModalIdx = null; }
+function modalSendClassroom() { if (currentModalIdx !== null) { sendOne(currentModalIdx); closeModal(); } }
+
+// ─── COPY ─────────────────────────────────────────────────────────────────────
+function buildText(r) {
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+  var nl = String.fromCharCode(10);
+  var oaLogs = (r.oaAchieved || []).length ? nl + 'OA Logrados: ' + r.oaAchieved.join(', ') : '';
+  var oaPend = (r.oaPending || []).length ? nl + 'OA por fortalecer: ' + r.oaPending.join(', ') : '';
+  var strList = (r.strengths || []).map(function(s) { return '• ' + s; }).join(nl);
+  var impList = (r.improvements || []).map(function(s) { return '• ' + s; }).join(nl);
+  return 'RETROALIMENTACION - ' + r.studentName + nl + 'Archivo: ' + r.fileName + nl + 'Nota: ' + sd + '/' + scale
+    + oaLogs + oaPend
+    + nl + nl + 'Fortalezas:' + nl + strList
+    + nl + nl + 'A mejorar:' + nl + impList
+    + nl + nl + 'Comentarios del profesor:' + nl + (r.feedback || '');
+}
+function copyFeedbackModal() { if (currentModalIdx !== null) copyText(buildText(results[currentModalIdx])); }
+function copyFeedbackIdx(i) { copyText(buildText(results[i])); }
+function copyText(t) { navigator.clipboard.writeText(t).then(function() { showToast('Copiado al portapapeles', 'ok'); }).catch(function() { showToast('No se pudo copiar', 'err'); }); }
+
+// ─── GOOGLE CLASSROOM REAL ────────────────────────────────────────────────────
+var CLIENT_ID = '93073838810-t1ck44mdjqukhmgdvu51435fk80nq8hr.apps.googleusercontent.com';
+var SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.students https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
+var accessToken = null;
+var tokenClient = null;
+var gcCourses = [];
+var gcWorks = [];
+var gcSubmissions = {};
+
+function initGoogleAuth() {
+  if (!window.google || !window.google.accounts) {
+    setTimeout(initGoogleAuth, 500);
+    return;
+  }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: function(resp) {
+      if (resp.error) { showToast('Error al conectar: ' + resp.error, 'err'); return; }
+      accessToken = resp.access_token;
+      fetchUserInfo();
+    }
+  });
+}
+initGoogleAuth();
+
+function fetchUserInfo() {
+  fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: 'Bearer ' + accessToken }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(info) {
+    classroomConnected = true;
+    document.getElementById('classroomDot').classList.add('on');
+    document.getElementById('classroomChipText').textContent = info.name ? info.name.split(' ')[0] + ' — Conectado' : 'Conectado';
+    document.getElementById('userAvatar').style.display = 'flex';
+    document.getElementById('userPic').src = info.picture || '';
+    document.getElementById('userName').textContent = info.email || '';
+    document.getElementById('classroomBtn').style.display = 'none';
+    document.getElementById('disconnectBtn').style.display = 'flex';
+    showToast('✓ Conectado como ' + (info.email || 'profesor'), 'ok');
+    loadCourses();
+  })
+  .catch(function() { showToast('No se pudo obtener perfil de usuario', 'err'); });
+}
+
+function connectClassroom() {
+  if (classroomConnected) { showToast('Ya estás conectado a Google Classroom'); return; }
+  if (!tokenClient) { showToast('Cargando autenticación de Google…'); setTimeout(connectClassroom, 800); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function disconnectClassroom() {
+  if (accessToken) { google.accounts.oauth2.revoke(accessToken, function() {}); }
+  accessToken = null;
+  classroomConnected = false;
+  gcCourses = [];
+  gcWorks = [];
+  gcSubmissions = {};
+  document.getElementById('classroomDot').classList.remove('on');
+  document.getElementById('classroomChipText').textContent = 'Classroom desconectado';
+  document.getElementById('userAvatar').style.display = 'none';
+  document.getElementById('classroomBtn').style.display = 'flex';
+  document.getElementById('disconnectBtn').style.display = 'none';
+  showToast('Sesión de Classroom cerrada');
+}
+
+function gcFetch(url) {
+  return fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } }).then(function(r) {
+    if (!r.ok) throw new Error('Error API Classroom: ' + r.status);
+    return r.json();
+  });
+}
+
+function loadCourses() {
+  gcFetch('https://classroom.googleapis.com/v1/courses?teacherId=me&courseStates=ACTIVE')
+  .then(function(data) {
+    gcCourses = data.courses || [];
+    showToast('✓ ' + gcCourses.length + ' curso' + (gcCourses.length !== 1 ? 's' : '') + ' cargado' + (gcCourses.length !== 1 ? 's' : '') + ' de Classroom', 'ok');
+  })
+  .catch(function(e) { showToast('No se pudieron cargar los cursos: ' + e.message, 'err'); });
+}
+
+function openSendModal(idx) {
+  if (!classroomConnected) { showToast('Primero conecta Google Classroom', 'err'); return; }
+  if (!gcCourses.length) { showToast('Cargando cursos de Classroom…'); loadCourses(); return; }
+  var r = results[idx];
+
+  // Build modal HTML
+  var courseOptions = gcCourses.map(function(c) {
+    return '<option value="' + c.id + '">' + c.name + '</option>';
+  }).join('');
+
+  var html = '<div style="margin-bottom:14px">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Estudiante</div>'
+    + '<div style="font-size:15px;font-weight:600;color:var(--ink)">' + r.studentName + '</div>'
+    + '<div style="font-size:11px;color:var(--ink4)">' + r.fileName + '</div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Curso en Classroom</div>'
+    + '<select class="sel" id="gcCourseSelect" onchange="loadWorks()">' + courseOptions + '</select>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Tarea</div>'
+    + '<select class="sel" id="gcWorkSelect"><option>Selecciona un curso primero…</option></select>'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Correo del estudiante (para encontrarlo)</div>'
+    + '<input class="inp" id="gcStudentEmail" placeholder="alumno@colegiolamision.cl" style="font-size:13px">'
+    + '<div style="font-size:10px;color:var(--ink4);margin-top:4px">Debe coincidir con el correo registrado en Classroom</div>'
+    + '</div>'
+    + '<div style="background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r);padding:12px;font-size:12px;color:var(--ink2);line-height:1.7;margin-bottom:4px">'
+    + '<div style="font-weight:700;color:var(--gold);margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px">Vista previa del comentario privado</div>'
+    + buildCommentText(r)
+    + '</div>';
+
+  document.getElementById('mName').textContent = 'Enviar a Google Classroom';
+  document.getElementById('mFile').textContent = r.studentName + ' — ' + r.fileName;
+  document.getElementById('mBody').innerHTML = html;
+  document.getElementById('feedModal').classList.remove('hidden');
+  currentModalIdx = idx;
+  document.getElementById('modalSendBtn').style.display = 'none';
+  document.getElementById('modalSubmitBtn').style.display = 'flex';
+  loadWorks();
+}
+
+function loadWorks() {
+  var courseId = document.getElementById('gcCourseSelect') && document.getElementById('gcCourseSelect').value;
+  if (!courseId) return;
+  var sel = document.getElementById('gcWorkSelect');
+  sel.innerHTML = '<option>Cargando tareas…</option>';
+  gcFetch('https://classroom.googleapis.com/v1/courses/' + courseId + '/courseWork?orderBy=updateTime desc')
+  .then(function(data) {
+    gcWorks = data.courseWork || [];
+    if (!gcWorks.length) { sel.innerHTML = '<option>Sin tareas activas</option>'; return; }
+    sel.innerHTML = gcWorks.map(function(w) {
+      return '<option value="' + w.id + '">' + w.title + '</option>';
+    }).join('');
+  })
+  .catch(function() { sel.innerHTML = '<option>Error al cargar tareas</option>'; });
+}
+
+function buildCommentText(r) {
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+  var oaLine = (r.oaAchieved && r.oaAchieved.length) ? '<br>OA Logrados: ' + r.oaAchieved.join(', ') : '';
+  var strList = (r.strengths || []).map(function(s) { return '• ' + s; }).join('<br>');
+  var impList = (r.improvements || []).map(function(s) { return '• ' + s; }).join('<br>');
+  return 'Hola ' + r.studentName + ', aquí va la retroalimentación de tu trabajo:<br><br>'
+    + 'Nota: ' + sd + '/' + scale + oaLine + '<br><br>'
+    + 'Fortalezas:<br>' + strList
+    + '<br><br>Para mejorar:<br>' + impList
+    + '<br><br>Comentarios del profesor:<br>' + (r.feedback || '');
+}
+
+function buildCommentRaw(r) {
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+  var nl = String.fromCharCode(10);
+  var oaLine = (r.oaAchieved && r.oaAchieved.length) ? nl + 'OA Logrados: ' + r.oaAchieved.join(', ') : '';
+  var strList = (r.strengths || []).map(function(s) { return '• ' + s; }).join(nl);
+  var impList = (r.improvements || []).map(function(s) { return '• ' + s; }).join(nl);
+  return 'Hola ' + r.studentName + ', aqui va la retroalimentacion de tu trabajo:' + nl + nl
+    + 'Nota: ' + sd + '/' + scale + oaLine + nl + nl
+    + 'Fortalezas:' + nl + strList + nl + nl
+    + 'Para mejorar:' + nl + impList + nl + nl
+    + 'Comentarios del profesor:' + nl + (r.feedback || '');
+}
+
+async function submitToClassroom() {
+  var courseId = document.getElementById('gcCourseSelect').value;
+  var workId = document.getElementById('gcWorkSelect').value;
+  var studentEmail = (document.getElementById('gcStudentEmail').value || '').trim();
+  var r = results[currentModalIdx];
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+
+  if (!courseId || !workId || workId === 'Sin tareas activas') { showToast('Selecciona curso y tarea', 'err'); return; }
+  if (!studentEmail) { showToast('Ingresa el correo del estudiante', 'err'); return; }
+
+  showToast('Buscando entrega del estudiante…');
+
+  try {
+    // Find student submission by email → first get userId
+    var profileData = await gcFetch('https://classroom.googleapis.com/v1/userProfiles/' + encodeURIComponent(studentEmail));
+    var userId = profileData.id;
+
+    // Get submissions for this student
+    var subData = await gcFetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId +
+      '/courseWork/' + workId +
+      '/studentSubmissions?userId=' + userId
+    );
+    var submissions = subData.studentSubmissions || [];
+    if (!submissions.length) { showToast('No se encontró entrega del estudiante', 'err'); return; }
+    var submissionId = submissions[0].id;
+
+    // Post private comment
+    var commentBody = buildCommentRaw(r);
+    await fetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId +
+      '/courseWork/' + workId +
+      '/studentSubmissions/' + submissionId + ':addOnAttachmentStudentWork',
+      { method: 'POST', headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: commentBody }) }
+    );
+
+    // Actually use the right endpoint: patch to add grade + return
+    var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+    var maxPoints = scale;
+    await fetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId +
+      '/courseWork/' + workId +
+      '/studentSubmissions/' + submissionId +
+      '?updateMask=assignedGrade,draftGrade',
+      {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedGrade: parseFloat(sd), draftGrade: parseFloat(sd) })
+      }
+    );
+
+    // Return the submission with the grade
+    await fetch(
+      'https://classroom.googleapis.com/v1/courses/' + courseId +
+      '/courseWork/' + workId +
+      '/studentSubmissions/' + submissionId + ':return',
+      { method: 'POST', headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, body: '{}' }
+    );
+
+    results[currentModalIdx].sent = true;
+    updateSentCell(currentModalIdx);
+    if (selectedIdx === currentModalIdx) showFeedback(currentModalIdx);
+    updateStats();
+    closeModal();
+    showToast('✓ Nota y comentario publicados en Classroom para ' + r.studentName, 'ok');
+
+  } catch(e) {
+    showToast('Error al publicar: ' + e.message, 'err');
+  }
+}
+
+function sendOne(idx) {
+  if (!classroomConnected) { showToast('Primero conecta Google Classroom', 'err'); return; }
+  openSendModal(idx);
+}
+
+function sendAllClassroom() {
+  if (!classroomConnected) { connectClassroom(); return; }
+  if (!results.length) { showToast('No hay resultados para enviar', 'err'); return; }
+  showToast('Selecciona un estudiante para enviarlo individualmente a Classroom');
+}
+
+// ─── BULK SEND ────────────────────────────────────────────────────────────────
+function openBulkSendModal() {
+  if (!classroomConnected) { connectClassroom(); return; }
+  if (!results.length) { showToast('No hay resultados aún', 'err'); return; }
+  showToast('Para enviar a Classroom, usa el botón "Enviar" en cada fila o en el panel derecho de cada estudiante.');
+}
+
+function modalSendClassroom() {
+  if (currentModalIdx !== null) { openSendModal(currentModalIdx); }
+}
+
+// ─── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+function exportExcel() {
+  if (!results.length) { showToast('No hay resultados para exportar', 'err'); return; }
+  var scale = parseInt(document.getElementById('scaleSelect').value);
+  var course = document.getElementById('courseName').value || 'Mi Clase';
+  var subject = document.getElementById('oaSubject').value;
+  var level = document.getElementById('oaLevel').value;
+  var subjectName = subject && OA_DB[subject] ? OA_DB[subject].name : '';
+  var fecha = new Date().toLocaleDateString('es-CL');
+
+  var wb = XLSX.utils.book_new();
+
+  // Hoja 1: Resumen por curso
+  var s1 = [
+    ['CorrectIA — Informe de evaluaciones'],
+    ['Curso: ' + course + '   Nivel: ' + level + '   Asignatura: ' + subjectName],
+    ['OA evaluados: ' + (selectedOAs.join(', ') || 'No especificados')],
+    ['Fecha: ' + fecha],
+    [],
+    ['Estudiante','Archivo','Nota','Porcentaje','OA Logrados','OA Por fortalecer','Uso IA (%)','Fortaleza principal','A mejorar principal','Enviado Classroom','Retroalimentación']
+  ];
+  results.forEach(function(r) {
+    var pct = r.scorePercent || Math.round((r.score/scale)*100);
+    var sd = scale === 7 ? parseFloat(r.score).toFixed(1) : Math.round(r.score);
+    s1.push([
+      r.studentName, r.fileName, sd, pct + '%',
+      (r.oaAchieved || []).join('; '),
+      (r.oaPending || []).join('; '),
+      (r.aiPercent || 0) + '%',
+      (r.strengths || [''])[0],
+      (r.improvements || [''])[0],
+      r.sent ? 'Sí' : 'No',
+      r.feedback || ''
+    ]);
+  });
+  var ws1 = XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols'] = [18,22,8,10,30,30,10,35,35,12,60].map(function(w) { return { wch: w }; });
+  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen');
+
+  // Hoja 2: Por criterio
+  if (results[0] && results[0].criteria && results[0].criteria.length) {
+    var headers2 = ['Estudiante'].concat(results[0].criteria.map(function(c) { return c.name; }));
+    var s2 = [headers2];
+    results.forEach(function(r) {
+      s2.push([r.studentName].concat((r.criteria || []).map(function(c) { return c.score + '/' + c.maxScore; })));
+    });
+    var ws2 = XLSX.utils.aoa_to_sheet(s2);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Por criterio');
+  }
+
+  // Hoja 3: OA
+  var s3 = [['Estudiante','OA Logrados','OA Por fortalecer']];
+  results.forEach(function(r) {
+    s3.push([r.studentName, (r.oaAchieved||[]).join('\n'), (r.oaPending||[]).join('\n')]);
+  });
+  var ws3 = XLSX.utils.aoa_to_sheet(s3);
+  ws3['!cols'] = [20,50,50].map(function(w) { return { wch: w }; });
+  XLSX.utils.book_append_sheet(wb, ws3, 'Logro OA');
+
+  // Hoja 4: Retroalimentación completa
+  var s4 = [['Estudiante','Fortalezas','A mejorar','Retroalimentación completa']];
+  results.forEach(function(r) {
+    s4.push([r.studentName, (r.strengths||[]).join('\n'), (r.improvements||[]).join('\n'), r.feedback || '']);
+  });
+  var ws4 = XLSX.utils.aoa_to_sheet(s4);
+  ws4['!cols'] = [20,45,45,65].map(function(w) { return { wch: w }; });
+  XLSX.utils.book_append_sheet(wb, ws4, 'Retroalimentación');
+
+  var filename = 'CorrectIA_' + course.replace(/\s+/g,'_') + '_' + fecha.replace(/\//g,'-') + '.xlsx';
+  XLSX.writeFile(wb, filename);
+  showToast('✓ Excel exportado con ' + results.length + ' resultados', 'ok');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  var ico = type === 'ok' ? 'ti-check' : type === 'err' ? 'ti-alert-triangle' : 'ti-info-circle';
+  t.innerHTML = '<i class="ti ' + ico + '"></i>' + msg;
+  var wrap = document.getElementById('toastWrap');
+  wrap.appendChild(t);
+  setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function() { t.remove(); }, 300); }, 3800);
+}
+</script>
+</body>
+</html>
